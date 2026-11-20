@@ -1,0 +1,128 @@
+<svg xmlns='http://www.w3.org/2000/svg' width='1520' height='1400' viewBox='0 0 1520 1400'>
+<rect width='100%' height='100%' fill='#FFFFFF'/>
+<defs>
+  <marker id='open' viewBox='0 0 12 12' refX='11' refY='6' markerWidth='12' markerHeight='12' orient='auto-start-reverse'>
+    <path d='M1,1 L11,6 L1,11' fill='none' stroke='#1B241F' stroke-width='1.6'/></marker>
+  <marker id='filled' viewBox='0 0 12 12' refX='11' refY='6' markerWidth='11' markerHeight='11' orient='auto-start-reverse'>
+    <path d='M0,0 L12,6 L0,12 z' fill='#1B241F'/></marker>
+  <marker id='triangle' viewBox='0 0 16 16' refX='15' refY='8' markerWidth='16' markerHeight='16' orient='auto-start-reverse'>
+    <path d='M1,1 L15,8 L1,15 z' fill='#FFFFFF' stroke='#1B241F' stroke-width='1.6'/></marker>
+</defs>
+<rect x='225' y='40' width='1060' height='1330' rx='6' fill='#FBFBF8' stroke='#1B241F' stroke-width='2'/>
+<text x='755' y='77.7' font-family='Helvetica Neue, Helvetica, Arial, sans-serif' font-size='22' font-weight='bold' text-anchor='middle' fill='#1B241F'>SmartFridge</text>
+<ellipse cx='470' cy='135' rx='128' ry='30' fill='#FFFFFF' stroke='#1B241F' stroke-width='1.8'/>
+<text x='470' y='140.1' font-family='Helvetica Neue, Helvetica, Arial, sans-serif' font-size='14.5' font-weight='normal' text-anchor='middle' fill='#1B241F'>Consulter son frigo</text>
+<ellipse cx='470' cy='235' rx='128' ry='42' fill='#FFFFFF' stroke='#1B241F' stroke-width='1.8'/>
+<text x='470' y='228.1' font-family='Helvetica Neue, Helvetica, Arial, sans-serif' font-size='14.5' font-weight='normal' text-anchor='middle' fill='#1B241F'>Ajouter un produit</text>
+<path d='M364,241 L576,241' fill='none' stroke='#1B241F' stroke-width='1'/>
+<text x='470' y='254.1' font-family='Helvetica Neue, Helvetica, Arial, sans-serif' font-size='11.5' font-weight='normal' text-anchor='middle' fill='#5C665F'>points d’extension :</text>
+<text x='470' y='267.9' font-family='Helvetica Neue, Helvetica, Arial, sans-serif' font-size='11.5' font-weight='normal' text-anchor='middle' fill='#5C665F'>saisie du nom</text>
+<ellipse cx='470' cy='360' rx='140' ry='38' fill='#FFFFFF' stroke='#1B241F' stroke-width='1.8'/>
+<text x='470' y='356.4' font-family='Helvetica Neue, Helvetica, Arial, sans-serif' font-size='14.5' font-weight='normal' text-anchor='middle' fill='#1B241F'>Ajouter des produits</text>
+<text x='470' y='373.8' font-family='Helvetica Neue, Helvetica, Arial, sans-serif' font-size='14.5' font-weight='normal' text-anchor='middle' fill='#1B241F'>depuis un ticket de caisse</text>
+<ellipse cx='470' cy='500' rx='140' ry='30' fill='#FFFFFF' stroke='#1B241F' stroke-width='1.8'/>
+<text x='470' y='505.1' font-family='Helvetica Neue, Helvetica, Arial, sans-serif' font-size='14.5' font-weight='normal' text-anchor='middle' fill='#1B241F'>Retirer un produit du frigo</text>
+<ellipse cx='470' cy='625' rx='128' ry='42' fill='#FFFFFF' stroke='#1B241F' stroke-width='1.8'/>
+<text x='470' y='618.1' font-family='Helvetica Neue, Helvetica, Arial, sans-serif' font-size='14.5' font-weight='normal' text-anchor='middle' fill='#1B241F'>Cuisiner une recette</text>
+<path d='M364,631 L576,631' fill='none' stroke='#1B241F' stroke-width='1'/>
+<text x='470' y='644.1' font-family='Helvetica Neue, Helvetica, Arial, sans-serif' font-size='11.5' font-weight='normal' text-anchor='middle' fill='#5C665F'>points d’extension :</text>
+<text x='470' y='657.9' font-family='Helvetica Neue, Helvetica, Arial, sans-serif' font-size='11.5' font-weight='normal' text-anchor='middle' fill='#5C665F'>liste des ingrédients</text>
+<ellipse cx='470' cy='745' rx='140' ry='30' fill='#FFFFFF' stroke='#1B241F' stroke-width='1.8'/>
+<text x='470' y='750.1' font-family='Helvetica Neue, Helvetica, Arial, sans-serif' font-size='14.5' font-weight='normal' text-anchor='middle' fill='#1B241F'>Compléter sa liste de courses</text>
+<ellipse cx='470' cy='835' rx='128' ry='30' fill='#FFFFFF' stroke='#1B241F' stroke-width='1.8'/>
+<text x='470' y='840.1' font-family='Helvetica Neue, Helvetica, Arial, sans-serif' font-size='14.5' font-weight='normal' text-anchor='middle' fill='#1B241F'>Consulter son bilan</text>
+<ellipse cx='470' cy='925' rx='128' ry='30' fill='#FFFFFF' stroke='#1B241F' stroke-width='1.8'/>
+<text x='470' y='930.1' font-family='Helvetica Neue, Helvetica, Arial, sans-serif' font-size='14.5' font-weight='normal' text-anchor='middle' fill='#1B241F'>S’abonner à Premium</text>
+<ellipse cx='470' cy='1030' rx='128' ry='30' fill='#FFFFFF' stroke='#1B241F' stroke-width='1.8'/>
+<text x='470' y='1035.1' font-family='Helvetica Neue, Helvetica, Arial, sans-serif' font-size='14.5' font-weight='normal' text-anchor='middle' fill='#1B241F'>Créer un lieu de stockage</text>
+<ellipse cx='470' cy='1110' rx='128' ry='30' fill='#FFFFFF' stroke='#1B241F' stroke-width='1.8'/>
+<text x='470' y='1115.1' font-family='Helvetica Neue, Helvetica, Arial, sans-serif' font-size='14.5' font-weight='normal' text-anchor='middle' fill='#1B241F'>Exporter son bilan</text>
+<ellipse cx='470' cy='1190' rx='135' ry='30' fill='#FFFFFF' stroke='#1B241F' stroke-width='1.8'/>
+<text x='470' y='1195.1' font-family='Helvetica Neue, Helvetica, Arial, sans-serif' font-size='14.5' font-weight='normal' text-anchor='middle' fill='#1B241F'>Personnaliser l’apparence</text>
+<ellipse cx='470' cy='1275' rx='128' ry='36' fill='#FFFFFF' stroke='#1B241F' stroke-width='1.8'/>
+<text x='470' y='1271.4' font-family='Helvetica Neue, Helvetica, Arial, sans-serif' font-size='14.5' font-weight='normal' text-anchor='middle' fill='#1B241F'>Envoyer les rappels</text>
+<text x='470' y='1288.8' font-family='Helvetica Neue, Helvetica, Arial, sans-serif' font-size='14.5' font-weight='normal' text-anchor='middle' fill='#1B241F'>de péremption</text>
+<ellipse cx='1005' cy='175' rx='128' ry='30' fill='#FFFFFF' stroke='#1B241F' stroke-width='1.8'/>
+<text x='1005' y='180.1' font-family='Helvetica Neue, Helvetica, Arial, sans-serif' font-size='14.5' font-weight='normal' text-anchor='middle' fill='#1B241F'>Scanner le code-barres</text>
+<ellipse cx='1005' cy='300' rx='118' ry='36' fill='#FFFFFF' stroke='#1B241F' stroke-width='1.8'/>
+<text x='1005' y='296.4' font-family='Helvetica Neue, Helvetica, Arial, sans-serif' font-size='14.5' font-weight='normal' text-anchor='middle' fill='#1B241F'>Indiquer la date</text>
+<text x='1005' y='313.8' font-family='Helvetica Neue, Helvetica, Arial, sans-serif' font-size='14.5' font-weight='normal' text-anchor='middle' fill='#1B241F'>de péremption</text>
+<ellipse cx='975' cy='455' rx='132' ry='30' fill='#FFFFFF' stroke='#1B241F' stroke-width='1.8'/>
+<text x='975' y='460.1' font-family='Helvetica Neue, Helvetica, Arial, sans-serif' font-size='14.5' font-weight='normal' text-anchor='middle' fill='#1B241F'>Marquer comme consommé</text>
+<ellipse cx='975' cy='560' rx='118' ry='30' fill='#FFFFFF' stroke='#1B241F' stroke-width='1.8'/>
+<text x='975' y='565.1' font-family='Helvetica Neue, Helvetica, Arial, sans-serif' font-size='14.5' font-weight='normal' text-anchor='middle' fill='#1B241F'>Marquer comme jeté</text>
+<ellipse cx='1005' cy='690' rx='132' ry='36' fill='#FFFFFF' stroke='#1B241F' stroke-width='1.8'/>
+<text x='1005' y='686.4' font-family='Helvetica Neue, Helvetica, Arial, sans-serif' font-size='14.5' font-weight='normal' text-anchor='middle' fill='#1B241F'>Ajouter les ingrédients</text>
+<text x='1005' y='703.8' font-family='Helvetica Neue, Helvetica, Arial, sans-serif' font-size='14.5' font-weight='normal' text-anchor='middle' fill='#1B241F'>manquants à la liste</text>
+<ellipse cx='1005' cy='1275' rx='132' ry='36' fill='#FFFFFF' stroke='#1B241F' stroke-width='1.8'/>
+<text x='1005' y='1271.4' font-family='Helvetica Neue, Helvetica, Arial, sans-serif' font-size='14.5' font-weight='normal' text-anchor='middle' fill='#1B241F'>Sauvegarder les données</text>
+<text x='1005' y='1288.8' font-family='Helvetica Neue, Helvetica, Arial, sans-serif' font-size='14.5' font-weight='normal' text-anchor='middle' fill='#1B241F'>chaque jour</text>
+<circle cx='105' cy='474' r='13' fill='#FFFFFF' stroke='#1B241F' stroke-width='1.8'/>
+<path d='M105,487 L105,525' fill='none' stroke='#1B241F' stroke-width='1.8'/>
+<path d='M81,500 L129,500' fill='none' stroke='#1B241F' stroke-width='1.8'/>
+<path d='M105,525 L87,554' fill='none' stroke='#1B241F' stroke-width='1.8'/>
+<path d='M105,525 L123,554' fill='none' stroke='#1B241F' stroke-width='1.8'/>
+<text x='105' y='577.2' font-family='Helvetica Neue, Helvetica, Arial, sans-serif' font-size='15' font-weight='bold' text-anchor='middle' fill='#1B241F'>Utilisateur</text>
+<text x='105' y='596.2' font-family='Helvetica Neue, Helvetica, Arial, sans-serif' font-size='12' font-weight='normal' text-anchor='middle' fill='#5C665F' font-style='italic'>principal</text>
+<circle cx='105' cy='1034' r='13' fill='#FFFFFF' stroke='#1B241F' stroke-width='1.8'/>
+<path d='M105,1047 L105,1085' fill='none' stroke='#1B241F' stroke-width='1.8'/>
+<path d='M81,1060 L129,1060' fill='none' stroke='#1B241F' stroke-width='1.8'/>
+<path d='M105,1085 L87,1114' fill='none' stroke='#1B241F' stroke-width='1.8'/>
+<path d='M105,1085 L123,1114' fill='none' stroke='#1B241F' stroke-width='1.8'/>
+<text x='105' y='1137.2' font-family='Helvetica Neue, Helvetica, Arial, sans-serif' font-size='15' font-weight='bold' text-anchor='middle' fill='#1B241F'>Abonné Premium</text>
+<text x='105' y='1156.2' font-family='Helvetica Neue, Helvetica, Arial, sans-serif' font-size='12' font-weight='normal' text-anchor='middle' fill='#5C665F' font-style='italic'>principal</text>
+<circle cx='105' cy='1219' r='13' fill='#FFFFFF' stroke='#1B241F' stroke-width='1.8'/>
+<path d='M105,1232 L105,1270' fill='none' stroke='#1B241F' stroke-width='1.8'/>
+<path d='M81,1245 L129,1245' fill='none' stroke='#1B241F' stroke-width='1.8'/>
+<path d='M105,1270 L87,1299' fill='none' stroke='#1B241F' stroke-width='1.8'/>
+<path d='M105,1270 L123,1299' fill='none' stroke='#1B241F' stroke-width='1.8'/>
+<text x='105' y='1322.2' font-family='Helvetica Neue, Helvetica, Arial, sans-serif' font-size='15' font-weight='bold' text-anchor='middle' fill='#1B241F'>Horloge</text>
+<text x='105' y='1341.2' font-family='Helvetica Neue, Helvetica, Arial, sans-serif' font-size='12' font-weight='normal' text-anchor='middle' fill='#5C665F' font-style='italic'>le temps</text>
+<rect x='1315' y='137' width='170' height='76' rx='4' fill='#FFFFFF' stroke='#1B241F' stroke-width='1.8'/>
+<text x='1400' y='161.6' font-family='Helvetica Neue, Helvetica, Arial, sans-serif' font-size='13' font-weight='normal' text-anchor='middle' fill='#5C665F'>«système»</text>
+<text x='1400' y='181.2' font-family='Helvetica Neue, Helvetica, Arial, sans-serif' font-size='15' font-weight='bold' text-anchor='middle' fill='#1B241F'>Catalogue</text>
+<text x='1400' y='199.2' font-family='Helvetica Neue, Helvetica, Arial, sans-serif' font-size='15' font-weight='bold' text-anchor='middle' fill='#1B241F'>alimentaire</text>
+<rect x='1315' y='887' width='170' height='76' rx='4' fill='#FFFFFF' stroke='#1B241F' stroke-width='1.8'/>
+<text x='1400' y='911.5' font-family='Helvetica Neue, Helvetica, Arial, sans-serif' font-size='13' font-weight='normal' text-anchor='middle' fill='#5C665F'>«système»</text>
+<text x='1400' y='931.2' font-family='Helvetica Neue, Helvetica, Arial, sans-serif' font-size='15' font-weight='bold' text-anchor='middle' fill='#1B241F'>Service de</text>
+<text x='1400' y='949.2' font-family='Helvetica Neue, Helvetica, Arial, sans-serif' font-size='15' font-weight='bold' text-anchor='middle' fill='#1B241F'>paiement</text>
+<path d='M135,502 L342,135' fill='none' stroke='#1B241F' stroke-width='1.6'/>
+<path d='M135,502 L342,235' fill='none' stroke='#1B241F' stroke-width='1.6'/>
+<path d='M135,502 L330,360' fill='none' stroke='#1B241F' stroke-width='1.6'/>
+<path d='M135,502 L330,500' fill='none' stroke='#1B241F' stroke-width='1.6'/>
+<path d='M135,502 L342,625' fill='none' stroke='#1B241F' stroke-width='1.6'/>
+<path d='M135,502 L330,745' fill='none' stroke='#1B241F' stroke-width='1.6'/>
+<path d='M135,502 L342,835' fill='none' stroke='#1B241F' stroke-width='1.6'/>
+<path d='M135,502 L342,925' fill='none' stroke='#1B241F' stroke-width='1.6'/>
+<path d='M135,1062 L342,1030' fill='none' stroke='#1B241F' stroke-width='1.6'/>
+<path d='M135,1062 L342,1110' fill='none' stroke='#1B241F' stroke-width='1.6'/>
+<path d='M135,1062 L335,1190' fill='none' stroke='#1B241F' stroke-width='1.6'/>
+<path d='M135,1247 L342,1275' fill='none' stroke='#1B241F' stroke-width='1.6'/>
+<path d='M135,1255 L342,1340 L845,1340 L931.4262337991208,1304.8893425191072' fill='none' stroke='#1B241F' stroke-width='1.6'/>
+<path d='M1315,175 L1133.0,175.0' fill='none' stroke='#1B241F' stroke-width='1.6'/>
+<path d='M1315,925 L598.0,925.0' fill='none' stroke='#1B241F' stroke-width='1.6'/>
+<path d='M105,1018 L105,612' fill='none' stroke='#1B241F' stroke-width='1.6' marker-end='url(#triangle)'/>
+<text x='119' y='844.2' font-family='Helvetica Neue, Helvetica, Arial, sans-serif' font-size='12' font-weight='normal' text-anchor='start' fill='#5C665F' font-style='italic'>est un</text>
+<path d='M590.0357072948335,249.5837775218022 L895.3731443527787,286.680849313889' fill='none' stroke='#1B241F' stroke-width='1.6' stroke-dasharray='7 5' marker-end='url(#open)'/>
+<rect x='702.7044258238061' y='257.1323134178456' width='80' height='20' fill='#FFFFFF'/>
+<text x='742.7044258238061' y='272.5' font-family='Helvetica Neue, Helvetica, Arial, sans-serif' font-size='12.5' font-weight='normal' text-anchor='middle' fill='#1B241F'>«include»</text>
+<path d='M599.3902522840049,345.48894366908354 L894.246087487072,312.42099953416016' fill='none' stroke='#1B241F' stroke-width='1.6' stroke-dasharray='7 5' marker-end='url(#open)'/>
+<rect x='706.8181698855385' y='317.9549716016219' width='80' height='20' fill='#FFFFFF'/>
+<text x='746.8181698855385' y='333.3' font-family='Helvetica Neue, Helvetica, Arial, sans-serif' font-size='12.5' font-weight='normal' text-anchor='middle' fill='#1B241F'>«include»</text>
+<path d='M889.5377787783423,187.94903415569993 L591.12071495293,221.41636841649384' fill='none' stroke='#1B241F' stroke-width='1.6' stroke-dasharray='7 5' marker-end='url(#open)'/>
+<rect x='700.3292468656362' y='193.6827012860969' width='80' height='20' fill='#FFFFFF'/>
+<text x='740.3292468656362' y='209.1' font-family='Helvetica Neue, Helvetica, Arial, sans-serif' font-size='12.5' font-weight='normal' text-anchor='middle' fill='#1B241F'>«extend»</text>
+<path d='M625,92 L771,92 L785,106 L785,138 L625,138 Z' fill='#FFFBEA' stroke='#1B241F' stroke-width='1.2'/><path d='M771,92 L771,106 L785,106' fill='none' stroke='#1B241F' stroke-width='1.2'/>
+<text x='635' y='112.0' font-family='Helvetica Neue, Helvetica, Arial, sans-serif' font-size='12' font-weight='normal' text-anchor='start' fill='#1B241F'>condition :</text>
+<text x='635' y='126.4' font-family='Helvetica Neue, Helvetica, Arial, sans-serif' font-size='12' font-weight='normal' text-anchor='start' fill='#1B241F'>code-barres présent</text>
+<path d='M705.0,138 L737,203' fill='none' stroke='#1B241F' stroke-width='1.1' stroke-dasharray='7 5'/>
+<path d='M884.4233903485252,675.350505369447 L590.0357072948335,639.5837775218022' fill='none' stroke='#1B241F' stroke-width='1.6' stroke-dasharray='7 5' marker-end='url(#open)'/>
+<rect x='697.2295488216794' y='646.4671414456245' width='80' height='20' fill='#FFFFFF'/>
+<text x='737.2295488216794' y='661.8' font-family='Helvetica Neue, Helvetica, Arial, sans-serif' font-size='12.5' font-weight='normal' text-anchor='middle' fill='#1B241F'>«extend»</text>
+<path d='M640,572 L801,572 L815,586 L815,618 L640,618 Z' fill='#FFFBEA' stroke='#1B241F' stroke-width='1.2'/><path d='M801,572 L801,586 L815,586' fill='none' stroke='#1B241F' stroke-width='1.2'/>
+<text x='650' y='592.0' font-family='Helvetica Neue, Helvetica, Arial, sans-serif' font-size='12' font-weight='normal' text-anchor='start' fill='#1B241F'>condition : il manque</text>
+<text x='650' y='606.4' font-family='Helvetica Neue, Helvetica, Arial, sans-serif' font-size='12' font-weight='normal' text-anchor='start' fill='#1B241F'>des ingrédients</text>
+<path d='M727.5,618 L737,652' fill='none' stroke='#1B241F' stroke-width='1.1' stroke-dasharray='7 5'/>
+<path d='M858.9723113470061,469.30478353256086 L611,492' fill='none' stroke='#1B241F' stroke-width='1.6' marker-end='url(#triangle)'/>
+<path d='M875.9088761786198,543.7110481389512 L611,508' fill='none' stroke='#1B241F' stroke-width='1.6' marker-end='url(#triangle)'/>
+</svg>

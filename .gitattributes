@@ -1,0 +1,2 @@
+# Fins de ligne LF partout, même sous Windows (sinon legal.test.ts échoue : PRIVACY.md en CRLF).
+* text=auto eol=lf

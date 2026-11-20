@@ -1,0 +1,20 @@
+diff --git a/node_modules/react-native-gesture-handler/src/components/ReanimatedSwipeable/ReanimatedSwipeable.tsx b/node_modules/react-native-gesture-handler/src/components/ReanimatedSwipeable/ReanimatedSwipeable.tsx
+index 0000000..0000001 100644
+--- a/node_modules/react-native-gesture-handler/src/components/ReanimatedSwipeable/ReanimatedSwipeable.tsx
++++ b/node_modules/react-native-gesture-handler/src/components/ReanimatedSwipeable/ReanimatedSwipeable.tsx
+@@ -372,6 +372,7 @@
+   const leftActionAnimation = useAnimatedStyle(() => {
+     return {
+       opacity: showLeftProgress.value === 0 ? 0 : 1,
++      pointerEvents: showLeftProgress.value === 0 ? 'none' : 'auto',
+     };
+   });
+ 
+@@ -402,6 +403,7 @@
+   const rightActionAnimation = useAnimatedStyle(() => {
+     return {
+       opacity: showRightProgress.value === 0 ? 0 : 1,
++      pointerEvents: showRightProgress.value === 0 ? 'none' : 'auto',
+     };
+   });
+ 

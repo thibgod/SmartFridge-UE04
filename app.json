@@ -1,0 +1,224 @@
+{
+  "expo": {
+    "name": "SmartFridge",
+    "slug": "smartfridge",
+    "version": "1.0.0",
+    "scheme": "smartfridge",
+    "orientation": "portrait",
+    "icon": "./assets/icon.png",
+    "userInterfaceStyle": "automatic",
+    "ios": {
+      "supportsTablet": false,
+      "bundleIdentifier": "app.smartfridge.mobile",
+      "infoPlist": {
+        "CFBundleDevelopmentRegion": "fr",
+        "CFBundleAllowMixedLocalizations": true,
+        "UIFileSharingEnabled": true,
+        "LSSupportsOpeningDocumentsInPlace": true
+      },
+      "buildNumber": "1",
+      "config": {
+        "usesNonExemptEncryption": false
+      },
+      "privacyManifests": {
+        "NSPrivacyTracking": false,
+        "NSPrivacyTrackingDomains": [],
+        "NSPrivacyCollectedDataTypes": [],
+        "NSPrivacyAccessedAPITypes": [
+          {
+            "NSPrivacyAccessedAPIType": "NSPrivacyAccessedAPICategoryUserDefaults",
+            "NSPrivacyAccessedAPITypeReasons": [
+              "CA92.1"
+            ]
+          },
+          {
+            "NSPrivacyAccessedAPIType": "NSPrivacyAccessedAPICategoryFileTimestamp",
+            "NSPrivacyAccessedAPITypeReasons": [
+              "C617.1",
+              "0A2A.1",
+              "3B52.1"
+            ]
+          },
+          {
+            "NSPrivacyAccessedAPIType": "NSPrivacyAccessedAPICategoryDiskSpace",
+            "NSPrivacyAccessedAPITypeReasons": [
+              "E174.1",
+              "85F4.1"
+            ]
+          },
+          {
+            "NSPrivacyAccessedAPIType": "NSPrivacyAccessedAPICategorySystemBootTime",
+            "NSPrivacyAccessedAPITypeReasons": [
+              "35F9.1"
+            ]
+          }
+        ]
+      }
+    },
+    "android": {
+      "package": "app.smartfridge.mobile",
+      "adaptiveIcon": {
+        "backgroundColor": "#2F6B4F",
+        "foregroundImage": "./assets/android-icon-foreground.png",
+        "monochromeImage": "./assets/android-icon-monochrome.png"
+      },
+      "predictiveBackGestureEnabled": false,
+      "blockedPermissions": [
+        "android.permission.RECORD_AUDIO",
+        "android.permission.SYSTEM_ALERT_WINDOW",
+        "android.permission.READ_EXTERNAL_STORAGE",
+        "android.permission.WRITE_EXTERNAL_STORAGE",
+        "com.google.android.c2dm.permission.RECEIVE",
+        "com.google.android.finsky.permission.BIND_GET_INSTALL_REFERRER_SERVICE"
+      ],
+      "versionCode": 1
+    },
+    "plugins": [
+      "./plugins/withLocalNotificationsOnly",
+      [
+        "expo-router",
+        {
+          "headers": {
+            "Cross-Origin-Embedder-Policy": "credentialless",
+            "Cross-Origin-Opener-Policy": "same-origin"
+          }
+        }
+      ],
+      "expo-sqlite",
+      "@react-native-community/datetimepicker",
+      "expo-image",
+      [
+        "expo-camera",
+        {
+          "cameraPermission": "SmartFridge utilise l’appareil photo pour scanner un code-barres et photographier un ticket de caisse, une date sur un emballage ou un produit.",
+          "recordAudioAndroid": false,
+          "barcodeScannerEnabled": true,
+          "microphonePermission": false
+        }
+      ],
+      [
+        "expo-image-picker",
+        {
+          "photosPermission": "SmartFridge accède uniquement à l’image que vous choisissez : un ticket de caisse, une date sur un emballage ou la photo d’un produit.",
+          "cameraPermission": "SmartFridge utilise l’appareil photo pour scanner un code-barres et photographier un ticket de caisse, une date sur un emballage ou un produit.",
+          "microphonePermission": false
+        }
+      ],
+      [
+        "expo-notifications",
+        {
+          "icon": "./assets/notification-icon.png",
+          "color": "#2F6B4F"
+        }
+      ],
+      "expo-font",
+      "expo-sharing",
+      [
+        "expo-splash-screen",
+        {
+          "image": "./assets/splash-icon.png",
+          "imageWidth": 160,
+          "resizeMode": "contain",
+          "backgroundColor": "#F7F4EC",
+          "dark": {
+            "image": "./assets/splash-icon.png",
+            "backgroundColor": "#0E1411"
+          }
+        }
+      ],
+      "./plugins/withSceneLifecycle",
+      [
+        "expo-widgets",
+        {
+          "widgets": [
+            {
+              "name": "ExpiringWidget",
+              "displayName": "À consommer vite",
+              "description": "Les produits de votre frigo qui périment bientôt.",
+              "ios": {
+                "supportedFamilies": [
+                  "systemSmall",
+                  "systemMedium",
+                  "accessoryRectangular"
+                ]
+              }
+            }
+          ]
+        }
+      ],
+      "expo-iap",
+      "./plugins/withAliasDeepLinks.js",
+      [
+        "expo-alternate-app-icons",
+        [
+          {
+            "name": "Ocean",
+            "ios": "./assets/app-icons/icon-ocean.png",
+            "android": {
+              "foregroundImage": "./assets/app-icons/android-foreground-ocean.png",
+              "backgroundColor": "#1F5F8B"
+            }
+          },
+          {
+            "name": "Framboise",
+            "ios": "./assets/app-icons/icon-framboise.png",
+            "android": {
+              "foregroundImage": "./assets/app-icons/android-foreground-framboise.png",
+              "backgroundColor": "#A32A55"
+            }
+          },
+          {
+            "name": "Prune",
+            "ios": "./assets/app-icons/icon-prune.png",
+            "android": {
+              "foregroundImage": "./assets/app-icons/android-foreground-prune.png",
+              "backgroundColor": "#5E3F8F"
+            }
+          },
+          {
+            "name": "Terracotta",
+            "ios": "./assets/app-icons/icon-terracotta.png",
+            "android": {
+              "foregroundImage": "./assets/app-icons/android-foreground-terracotta.png",
+              "backgroundColor": "#9C4523"
+            }
+          }
+        ]
+      ],
+      [
+        "react-native-android-widget",
+        {
+          "widgets": [
+            {
+              "name": "ExpiringWidget",
+              "label": "À consommer vite",
+              "description": "Les produits de votre frigo qui périment bientôt.",
+              "minWidth": "180dp",
+              "minHeight": "110dp",
+              "targetCellWidth": 4,
+              "targetCellHeight": 2,
+              "resizeMode": "horizontal|vertical",
+              "widgetCategory": "home_screen",
+              "updatePeriodMillis": 21600000,
+              "previewImage": "./assets/widget-preview/expiring.png"
+            }
+          ]
+        }
+      ]
+    ],
+    "experiments": {
+      "typedRoutes": true
+    },
+    "platforms": [
+      "ios",
+      "android",
+      "web"
+    ],
+    "web": {
+      "output": "single",
+      "favicon": "./assets/favicon.png",
+      "name": "SmartFridge",
+      "backgroundColor": "#F6F4EE"
+    }
+  }
+}

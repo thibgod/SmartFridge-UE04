@@ -1,0 +1,61 @@
+<svg xmlns='http://www.w3.org/2000/svg' width='1180' height='900' viewBox='0 0 1180 900'>
+<rect width='100%' height='100%' fill='#FFFFFF'/>
+<defs>
+  <marker id='open' viewBox='0 0 12 12' refX='11' refY='6' markerWidth='12' markerHeight='12' orient='auto-start-reverse'>
+    <path d='M1,1 L11,6 L1,11' fill='none' stroke='#1B241F' stroke-width='1.6'/></marker>
+  <marker id='filled' viewBox='0 0 12 12' refX='11' refY='6' markerWidth='11' markerHeight='11' orient='auto-start-reverse'>
+    <path d='M0,0 L12,6 L0,12 z' fill='#1B241F'/></marker>
+  <marker id='triangle' viewBox='0 0 16 16' refX='15' refY='8' markerWidth='16' markerHeight='16' orient='auto-start-reverse'>
+    <path d='M1,1 L15,8 L1,15 z' fill='#FFFFFF' stroke='#1B241F' stroke-width='1.6'/></marker>
+</defs>
+<rect x='15' y='30' width='1140' height='855' rx='22' fill='#FFFFFF' stroke='#1B241F' stroke-width='2'/>
+<path d='M15,70 L360,70 L380,50 L380,30' fill='none' stroke='#1B241F' stroke-width='1.5'/>
+<text x='30' y='56.0' font-family='Helvetica Neue, Helvetica, Arial, sans-serif' font-size='17' font-weight='bold' text-anchor='start' fill='#1B241F'>Envoyer les rappels de péremption</text>
+<rect x='30' y='90' width='590' height='780' fill='#F6F4EE' stroke='#1B241F' stroke-width='1.4'/>
+<line x1='30' y1='130' x2='620' y2='130' stroke='#1B241F' stroke-width='1.4'/>
+<text x='325.0' y='115.6' font-family='Helvetica Neue, Helvetica, Arial, sans-serif' font-size='16' font-weight='bold' text-anchor='middle' fill='#1B241F'>SmartFridge</text>
+<rect x='620' y='90' width='520' height='780' fill='#FFFFFF' stroke='#1B241F' stroke-width='1.4'/>
+<line x1='620' y1='130' x2='1140' y2='130' stroke='#1B241F' stroke-width='1.4'/>
+<text x='880.0' y='115.6' font-family='Helvetica Neue, Helvetica, Arial, sans-serif' font-size='16' font-weight='bold' text-anchor='middle' fill='#1B241F'>Utilisateur</text>
+<path d='M195,160 L225,160 L195,200 L225,200 Z' fill='#FFFFFF' stroke='#1B241F' stroke-width='1.8'/>
+<text x='236' y='176.6' font-family='Helvetica Neue, Helvetica, Arial, sans-serif' font-size='13.5' font-weight='normal' text-anchor='start' fill='#1B241F'>Quelques jours avant une date de</text>
+<text x='236' y='192.8' font-family='Helvetica Neue, Helvetica, Arial, sans-serif' font-size='13.5' font-weight='normal' text-anchor='start' fill='#1B241F'>péremption, à l’heure choisie</text>
+<rect x='210.0' y='244.0' width='240' height='52' rx='18' fill='#FFFFFF' stroke='#1B241F' stroke-width='1.8'/>
+<text x='330' y='266.5' font-family='Helvetica Neue, Helvetica, Arial, sans-serif' font-size='14' font-weight='normal' text-anchor='middle' fill='#1B241F'>Rassembler les produits</text>
+<text x='330' y='283.3' font-family='Helvetica Neue, Helvetica, Arial, sans-serif' font-size='14' font-weight='normal' text-anchor='middle' fill='#1B241F'>qui périment ce jour-là</text>
+<path d='M210,200 L210,220 L330,220 L330,244' fill='none' stroke='#1B241F' stroke-width='1.6' marker-end='url(#filled)'/>
+<path d='M330,328 L352,350 L330,372 L308,350 Z' fill='#FFFFFF' stroke='#1B241F' stroke-width='1.8'/>
+<path d='M330,296 L330,328' fill='none' stroke='#1B241F' stroke-width='1.6' marker-end='url(#filled)'/>
+<rect x='85.0' y='414.0' width='210' height='52' rx='18' fill='#FFFFFF' stroke='#1B241F' stroke-width='1.8'/>
+<text x='190' y='436.5' font-family='Helvetica Neue, Helvetica, Arial, sans-serif' font-size='14' font-weight='normal' text-anchor='middle' fill='#1B241F'>Nommer le produit</text>
+<text x='190' y='453.3' font-family='Helvetica Neue, Helvetica, Arial, sans-serif' font-size='14' font-weight='normal' text-anchor='middle' fill='#1B241F'>dans le rappel</text>
+<path d='M308,350 L190,350 L190,414' fill='none' stroke='#1B241F' stroke-width='1.6' marker-end='url(#filled)'/>
+<text x='300' y='340.6' font-family='Helvetica Neue, Helvetica, Arial, sans-serif' font-size='13' font-weight='normal' text-anchor='end' fill='#1B241F'>[un seul produit]</text>
+<rect x='365.0' y='414.0' width='210' height='52' rx='18' fill='#FFFFFF' stroke='#1B241F' stroke-width='1.8'/>
+<text x='470' y='436.5' font-family='Helvetica Neue, Helvetica, Arial, sans-serif' font-size='14' font-weight='normal' text-anchor='middle' fill='#1B241F'>Compter les produits</text>
+<text x='470' y='453.3' font-family='Helvetica Neue, Helvetica, Arial, sans-serif' font-size='14' font-weight='normal' text-anchor='middle' fill='#1B241F'>dans le rappel</text>
+<path d='M352,350 L470,350 L470,414' fill='none' stroke='#1B241F' stroke-width='1.6' marker-end='url(#filled)'/>
+<text x='360' y='340.6' font-family='Helvetica Neue, Helvetica, Arial, sans-serif' font-size='13' font-weight='normal' text-anchor='start' fill='#1B241F'>[plusieurs produits]</text>
+<path d='M330,503 L352,525 L330,547 L308,525 Z' fill='#FFFFFF' stroke='#1B241F' stroke-width='1.8'/>
+<path d='M190,466 L190,525 L308,525' fill='none' stroke='#1B241F' stroke-width='1.6' marker-end='url(#filled)'/>
+<path d='M470,466 L470,525 L352,525' fill='none' stroke='#1B241F' stroke-width='1.6' marker-end='url(#filled)'/>
+<path d='M205.0,582.0 L431.0,582.0 L455.0,610 L431.0,638.0 L205.0,638.0 Z' fill='#FFFFFF' stroke='#1B241F' stroke-width='1.8'/>
+<text x='320' y='614.9' font-family='Helvetica Neue, Helvetica, Arial, sans-serif' font-size='14' font-weight='normal' text-anchor='middle' fill='#1B241F'>Envoyer la notification</text>
+<path d='M330,547 L330,582' fill='none' stroke='#1B241F' stroke-width='1.6' marker-end='url(#filled)'/>
+<path d='M755.0,582.0 L1005.0,582.0 L1005.0,638.0 L755.0,638.0 L779.0,610 Z' fill='#FFFFFF' stroke='#1B241F' stroke-width='1.8'/>
+<text x='890' y='614.9' font-family='Helvetica Neue, Helvetica, Arial, sans-serif' font-size='14' font-weight='normal' text-anchor='middle' fill='#1B241F'>Recevoir la notification</text>
+<path d='M455,610 L755,610' fill='none' stroke='#1B241F' stroke-width='1.6' marker-end='url(#filled)'/>
+<path d='M880,668 L902,690 L880,712 L858,690 Z' fill='#FFFFFF' stroke='#1B241F' stroke-width='1.8'/>
+<path d='M880,638 L880,668' fill='none' stroke='#1B241F' stroke-width='1.6' marker-end='url(#filled)'/>
+<rect x='665.0' y='754.0' width='190' height='52' rx='18' fill='#FFFFFF' stroke='#1B241F' stroke-width='1.8'/>
+<text x='760' y='784.9' font-family='Helvetica Neue, Helvetica, Arial, sans-serif' font-size='14' font-weight='normal' text-anchor='middle' fill='#1B241F'>Ouvrir son frigo</text>
+<path d='M858,690 L760,690 L760,754' fill='none' stroke='#1B241F' stroke-width='1.6' marker-end='url(#filled)'/>
+<text x='850' y='680.5' font-family='Helvetica Neue, Helvetica, Arial, sans-serif' font-size='13' font-weight='normal' text-anchor='end' fill='#1B241F'>[touche le rappel]</text>
+<circle cx='760' cy='840' r='15' fill='#FFFFFF' stroke='#1B241F' stroke-width='2'/><circle cx='760' cy='840' r='9' fill='#1B241F'/>
+<text x='784' y='844.4' font-family='Helvetica Neue, Helvetica, Arial, sans-serif' font-size='12.5' font-weight='normal' text-anchor='start' fill='#5C665F' font-style='italic'>fin : produits revus</text>
+<path d='M760,806 L760,825' fill='none' stroke='#1B241F' stroke-width='1.6' marker-end='url(#filled)'/>
+<circle cx='1000' cy='780' r='15' fill='#FFFFFF' stroke='#1B241F' stroke-width='2'/><circle cx='1000' cy='780' r='9' fill='#1B241F'/>
+<text x='1024' y='784.4' font-family='Helvetica Neue, Helvetica, Arial, sans-serif' font-size='12.5' font-weight='normal' text-anchor='start' fill='#5C665F' font-style='italic'>fin : rappel ignoré</text>
+<path d='M902,690 L1000,690 L1000,765' fill='none' stroke='#1B241F' stroke-width='1.6' marker-end='url(#filled)'/>
+<text x='910' y='680.5' font-family='Helvetica Neue, Helvetica, Arial, sans-serif' font-size='13' font-weight='normal' text-anchor='start' fill='#1B241F'>[sinon]</text>
+</svg>

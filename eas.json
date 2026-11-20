@@ -1,0 +1,33 @@
+{
+  "cli": {
+    "version": ">= 16.0.0",
+    "appVersionSource": "remote"
+  },
+  "build": {
+    "preview": {
+      "distribution": "internal",
+      "env": {
+        "EXPO_PUBLIC_BETA": "1"
+      },
+      "android": {
+        "buildType": "apk"
+      }
+    },
+    "beta": {
+      "extends": "production",
+      "env": {
+        "EXPO_PUBLIC_BETA": "1"
+      }
+    },
+    "production": {
+      "autoIncrement": true,
+      "ios": {
+        "image": "macos-tahoe-26.6-xcode-27.1"
+      }
+    }
+  },
+  "submit": {
+    "beta": {},
+    "production": {}
+  }
+}
