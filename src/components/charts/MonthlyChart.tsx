@@ -2,7 +2,7 @@ import { useEffect, useMemo, useState } from 'react';
 import { Animated, Easing, Pressable, Text, View } from 'react-native';
 import { useReducedMotion } from 'react-native-reanimated';
 
-import { SegmentedControl } from '@/components/ui/SegmentedControl';
+import { GlassSegmentedControl } from '@/components/glass';
 import { niceMax } from '@/utils/chart';
 import { fontSize, makeStyles, radius, spacing, useTheme } from '@/theme';
 import { formatCents } from '@/utils/price';
@@ -65,7 +65,7 @@ export function MonthlyChart({ months, amounts }: MonthlyChartProps) {
   const describe = (row: (typeof rows)[number]) =>
     unit === 'count'
       ? `${pluralize(row.consumedValue, 'consommé')} · ${pluralize(row.discardedValue, 'jeté')}`
-      : `${formatCents(row.consumedValue)} économisés · ${formatCents(row.discardedValue)} perdus`;
+      : `${formatCents(row.consumedValue)} mangés · ${formatCents(row.discardedValue)} perdus`;
 
   return (
     <View style={styles.card}>
@@ -74,7 +74,7 @@ export function MonthlyChart({ months, amounts }: MonthlyChartProps) {
           Les 6 derniers mois
         </Text>
         <View style={styles.toggle}>
-          <SegmentedControl
+          <GlassSegmentedControl
             segments={[
               { value: 'count', label: 'Produits' },
               { value: 'euros', label: 'Euros' },
@@ -86,7 +86,7 @@ export function MonthlyChart({ months, amounts }: MonthlyChartProps) {
       </View>
 
       <View style={styles.legend}>
-        <LegendItem color={colors.chartConsumed} label={unit === 'count' ? 'Consommés' : 'Économisés'} />
+        <LegendItem color={colors.chartConsumed} label={unit === 'count' ? 'Consommés' : 'Mangés'} />
         <LegendItem color={colors.chartDiscarded} label={unit === 'count' ? 'Jetés' : 'Perdus'} />
       </View>
 

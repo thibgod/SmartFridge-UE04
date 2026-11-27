@@ -1,8 +1,10 @@
 import { CATEGORIES } from '@/constants/catalog';
 import type { Product } from '@/types/product';
+import { DEFAULT_URGENT_THRESHOLD } from '@/utils/expiry';
 import { computeImpact, formatKg } from '@/utils/impact';
 import { formatCents } from '@/utils/price';
 import {
+  AVERAGE_WASTE_SHARE,
   antiWasteScore,
   closedAmounts,
   computeWasteStats,
@@ -25,10 +27,16 @@ const shortDate = (iso: string) => new Date(iso).toLocaleDateString('fr-FR', { d
 /** Nombre de lignes d’historique imprimées : au-delà, l’export CSV prend le relais. */
 const HISTORY_ROWS = 40;
 
-export function buildReportHtml(products: readonly Product[], now: Date = new Date()): string {
-  const stats = computeWasteStats(products);
+export function buildReportHtml(
+  products: readonly Product[],
+  now: Date = new Date(),
+  urgentThreshold: number = DEFAULT_URGENT_THRESHOLD,
+): string {
+  const stats = computeWasteStats(products, urgentThreshold);
   const score = antiWasteScore(stats);
-  const impact = computeImpact(products);
+  const impact = computeImpact(products, urgentThreshold);
+  const average = Math.round(AVERAGE_WASTE_SHARE * 100);
+  const share = stats.wasteShare === null ? '—' : `${Math.round(stats.wasteShare * 100)}&nbsp;%`;
   const months = monthlyBreakdown(products, 6, now);
   const amounts = monthlyAmounts(products, 6, now);
   const categories = wasteByCategory(products).slice(0, 5);
@@ -64,13 +72,13 @@ export function buildReportHtml(products: readonly Product[], now: Date = new Da
   const historyRows = history
     .slice(0, HISTORY_ROWS)
     .map((p) => {
-      const { savedCents, lostCents } = closedAmounts(p);
+      const { eatenCents, lostCents } = closedAmounts(p);
       const consumed = p.status === 'consumed';
       return `<tr>
         <td>${escape(p.name)}</td>
         <td class="${consumed ? 'tag-ok' : 'tag-ko'}">${consumed ? 'Consommé' : 'Jeté'}</td>
         <td>${shortDate(p.closedAt ?? '')}</td>
-        <td class="num">${typeof p.price === 'number' ? formatCents(consumed ? savedCents : lostCents) : '—'}</td>
+        <td class="num">${typeof p.price === 'number' ? formatCents(consumed ? eatenCents : lostCents) : '—'}</td>
       </tr>`;
     })
     .join('');
@@ -114,15 +122,15 @@ export function buildReportHtml(products: readonly Product[], now: Date = new Da
   <p class="sub">Au ${longDate(now)} · ${stats.consumedCount + stats.discardedCount} produits suivis jusqu’au bout</p>
 
   <div class="kpis">
-    <div class="kpi"><div class="label">Économisés</div><div class="value green">${formatCents(stats.savedCents)}</div><div class="note">${stats.consumedCount} consommés</div></div>
+    <div class="kpi"><div class="label">Économisés</div><div class="value green">≈ ${formatCents(stats.avoidedCents)}</div><div class="note">vs un foyer moyen · ${share} jetés (moyenne ≈&nbsp;${average}&nbsp;%)</div></div>
     <div class="kpi"><div class="label">Perdus</div><div class="value red">${formatCents(stats.lostCents)}</div><div class="note">${stats.discardedCount} jetés</div></div>
     <div class="kpi"><div class="label">Score anti-gaspi</div><div class="value">${score === null ? '—' : `${score}<span class="muted" style="font-size:10pt"> / 100</span>`}</div><div class="note">part consommée</div></div>
-    <div class="kpi"><div class="label">Nourriture sauvée</div><div class="value">${formatKg(impact.savedKg)}</div><div class="note">≈ ${formatKg(impact.co2Kg)} de CO₂ évités</div></div>
+    <div class="kpi"><div class="label">Nourriture sauvée</div><div class="value">${formatKg(impact.savedKg)}</div><div class="note">de justesse · ≈ ${formatKg(impact.co2Kg)} de CO₂ évités</div></div>
   </div>
 
   <h2>Six derniers mois</h2>
   <table>
-    <thead><tr><th>Mois</th><th>Consommés / jetés</th><th class="num">Produits</th><th class="num">Économisés</th><th class="num">Perdus</th></tr></thead>
+    <thead><tr><th>Mois</th><th>Consommés / jetés</th><th class="num">Produits</th><th class="num">Mangés</th><th class="num">Perdus</th></tr></thead>
     <tbody>${monthRows}</tbody>
   </table>
   <div class="legend"><i style="background:#2B6CB0"></i>Consommés<i style="background:#CF6A2E"></i>Jetés</div>
@@ -139,7 +147,7 @@ export function buildReportHtml(products: readonly Product[], now: Date = new Da
     <tbody>${historyRows || '<tr><td colspan="4" class="muted">Aucun produit consommé ou jeté pour l’instant.</td></tr>'}</tbody>
   </table>
 
-  <footer>Généré par SmartFridge sur votre téléphone. Impact estimé d’après des moyennes par catégorie (ADEME).</footer>
+  <footer>Généré par SmartFridge sur votre téléphone. Économies estimées par rapport à un foyer moyen (environ 15 % des courses jetées, WRAP et ADEME). Impact estimé sur les produits mangés de justesse, d’après des moyennes par catégorie (ADEME).</footer>
 </body>
 </html>`;
 }

@@ -9,7 +9,10 @@ export default function PrivacyScreen() {
   const styles = useStyles();
   const insets = useSafeAreaInsets();
   return (
-    <ScrollView contentContainerStyle={[styles.content, { paddingBottom: insets.bottom + spacing.xxl }]}>
+    <ScrollView
+      contentInsetAdjustmentBehavior="automatic"
+      contentContainerStyle={[styles.content, { paddingBottom: insets.bottom + spacing.xxl }]}
+    >
       <Text style={styles.updated}>Dernière mise à jour : {PRIVACY_UPDATED_AT}</Text>
       <Text style={styles.intro}>{PRIVACY_INTRO}</Text>
       {PRIVACY_SECTIONS.map((section) => (

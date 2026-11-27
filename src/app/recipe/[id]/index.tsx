@@ -2,7 +2,8 @@ import Ionicons from '@expo/vector-icons/Ionicons';
 import { LinearGradient } from 'expo-linear-gradient';
 import { router, useLocalSearchParams } from 'expo-router';
 import { useMemo, useState } from 'react';
-import { Pressable, ScrollView, Text, View } from 'react-native';
+import { Pressable, Text, View } from 'react-native';
+import Animated, { useAnimatedRef, useAnimatedStyle, useScrollOffset } from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { EmptyState } from '@/components/EmptyState';
@@ -11,7 +12,7 @@ import { FoodImage } from '@/components/FoodImage';
 import { RecipeImage } from '@/components/recipes/RecipeImage';
 import { ServingsStepper } from '@/components/recipes/ServingsStepper';
 import { Button } from '@/components/ui/Button';
-import { IconButton } from '@/components/ui/IconButton';
+import { GlassButton, GlassHeader } from '@/components/glass';
 import { RECIPE_TAGS } from '@/constants/recipes';
 import { RECIPES } from '@/data/recipes';
 import { useToast } from '@/features/feedback/ToastProvider';
@@ -25,6 +26,7 @@ import { missingIngredients } from '@/features/shopping/shoppingLogic';
 import { useShopping } from '@/features/shopping/ShoppingProvider';
 import { useModalTopInset } from '@/hooks/useModalTopInset';
 import { HEADING_FONT_SCALE, fontSize, makeStyles, radius, spacing, useTheme } from '@/theme';
+import { glassRadius } from '@/theme/liquidGlass';
 import type { IconName, Recipe } from '@/types/content';
 import { daysUntil, formatIsoAsShortDate } from '@/utils/date';
 import { getExpiryInfo } from '@/utils/expiry';
@@ -54,6 +56,14 @@ function RecipeDetail({ recipe }: { recipe: Recipe }) {
   const insets = useSafeAreaInsets();
   const topInset = useModalTopInset();
   const activeProducts = usePlaceProducts();
+  // Photo vivante : parallaxe en descendant, étirement quand on tire vers le bas.
+  const scrollRef = useAnimatedRef<Animated.ScrollView>();
+  const scrollY = useScrollOffset(scrollRef);
+  const heroStyle = useAnimatedStyle(() => {
+    const y = scrollY.get();
+    if (y < 0) return { transform: [{ translateY: y / 2 }, { scale: 1 - y / HERO }] };
+    return { transform: [{ translateY: y * 0.35 }] };
+  });
   const { items: shoppingItems, addItems } = useShopping();
   const { favorites, toggleFavorite, statsFor } = useRecipeLog();
   const { showToast } = useToast();
@@ -122,20 +132,12 @@ function RecipeDetail({ recipe }: { recipe: Recipe }) {
 
   return (
     <View style={styles.screen}>
-      <ScrollView contentContainerStyle={{ paddingBottom: insets.bottom + spacing.xxl * 3 }}>
+      <Animated.ScrollView ref={scrollRef} contentContainerStyle={{ paddingBottom: insets.bottom + spacing.xxl * 3 }}>
         <View style={styles.hero}>
-          <RecipeImage recipe={recipe} style={styles.heroImage} width={800} creditBottom={CREDIT_BOTTOM} />
+          <Animated.View style={heroStyle}>
+            <RecipeImage recipe={recipe} style={styles.heroImage} width={800} creditBottom={CREDIT_BOTTOM} />
+          </Animated.View>
           <LinearGradient colors={['rgba(0,0,0,0.35)', 'transparent']} style={styles.heroShade} pointerEvents="none" />
-          <View style={[styles.heroActions, { top: spacing.md + topInset }]}>
-            <IconButton
-              icon={favorite ? 'heart' : 'heart-outline'}
-              label={favorite ? 'Retirer des favoris' : 'Ajouter aux favoris'}
-              tone="onImage"
-              size={40}
-              onPress={onFavorite}
-            />
-            <IconButton icon="close" label="Fermer" tone="onImage" size={40} onPress={goBack} />
-          </View>
         </View>
 
         <View style={styles.sheet}>
@@ -282,22 +284,44 @@ function RecipeDetail({ recipe }: { recipe: Recipe }) {
             </View>
           ) : null}
         </View>
-      </ScrollView>
+      </Animated.ScrollView>
 
-      <View style={[styles.footer, { paddingBottom: insets.bottom + spacing.md }]}>
+      {/* Commandes en verre sur la photo ; la barre devient du verre avec le titre une fois la photo passée. */}
+      <GlassHeader
+        title={recipe.title}
+        scrollY={scrollY}
+        threshold={HERO - 120}
+        topInset={topInset + spacing.sm}
+        right={
+          <>
+            <GlassButton
+              icon={favorite ? 'heart' : 'heart-outline'}
+              iconOnly
+              label={favorite ? 'Retirer des favoris' : 'Ajouter aux favoris'}
+              onPress={onFavorite}
+            />
+            <GlassButton icon="close" iconOnly label="Fermer" onPress={goBack} />
+          </>
+        }
+      />
+
+      {/* Barre d’outils flottante : boutons en verre au-dessus de la recette, qui défile dessous. */}
+      <View pointerEvents="box-none" style={[styles.footer, { paddingBottom: insets.bottom + spacing.md }]}>
         {locked ? (
-          <Button
+          <GlassButton
             label="Débloquer avec Premium"
             icon="sparkles-outline"
+            variant="prominent"
+            size="lg"
             style={styles.flex}
             onPress={() => showPaywall('recipes')}
           />
         ) : (
           <>
-            <Button
+            <GlassButton
               label="J’ai cuisiné"
               icon="checkmark-done"
-              variant="secondary"
+              size="lg"
               style={styles.flex}
               onPress={() => void markCooked()}
               accessibilityHint={
@@ -306,9 +330,11 @@ function RecipeDetail({ recipe }: { recipe: Recipe }) {
                   : undefined
               }
             />
-            <Button
+            <GlassButton
               label="Cuisiner"
               icon="play"
+              variant="prominent"
+              size="lg"
               style={styles.flex}
               onPress={() =>
                 router.push({ pathname: '/recipe/[id]/cook', params: { id: recipe.id, servings: String(servings) } })
@@ -339,14 +365,14 @@ const CREDIT_BOTTOM = radius.xxl + spacing.sm;
 const useStyles = makeStyles(({ colors }) => ({
   screen: { flex: 1, backgroundColor: colors.background },
   flex: { flex: 1 },
-  hero: { height: HERO },
+  hero: { height: HERO, zIndex: 0 },
   heroImage: { width: '100%', height: HERO },
   heroShade: { position: 'absolute', top: 0, left: 0, right: 0, height: 90 },
-  heroActions: { position: 'absolute', right: spacing.md, flexDirection: 'row', gap: spacing.sm },
   sheet: {
     marginTop: -radius.xxl,
-    borderTopLeftRadius: radius.xxl,
-    borderTopRightRadius: radius.xxl,
+    borderTopLeftRadius: glassRadius.sheet,
+    borderTopRightRadius: glassRadius.sheet,
+    zIndex: 1,
     backgroundColor: colors.background,
     paddingHorizontal: spacing.lg,
     paddingTop: spacing.xl,
@@ -475,8 +501,5 @@ const useStyles = makeStyles(({ colors }) => ({
     gap: spacing.md,
     paddingHorizontal: spacing.lg,
     paddingTop: spacing.md,
-    backgroundColor: colors.background,
-    borderTopWidth: 1,
-    borderTopColor: colors.border,
   },
 }));

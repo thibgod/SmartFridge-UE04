@@ -1,10 +1,10 @@
 # Journal de bord de l'équipe – SmartFridge
 
-17 novembre 2026 · Groupe 1A3-3
+27 novembre 2026 · Groupe 1A3-3
 
 ## Avant de commencer
 
-SmartFridge, c'est notre idée d'appli anti-gaspillage : on note ce qu'on a au frigo, et l'appli nous prévient avant que ça périme. Nous l'avons lancée le 14 octobre, et ce journal raconte comment elle a grandi, étape par étape, jusqu'au 17 novembre.
+SmartFridge, c'est notre idée d'appli anti-gaspillage : on note ce qu'on a au frigo, et l'appli nous prévient avant que ça périme. Nous l'avons lancée le 14 octobre, et ce journal raconte comment elle a grandi, étape par étape, jusqu'au 27 novembre.
 
 On est le groupe 1A3-3 en Analyse informatique (UE04).
 
@@ -38,6 +38,14 @@ L'appli est faite avec Expo (React Native), en TypeScript. Elle tourne sur iPhon
 - **10 nov.** Réinstallation : le profil gratuit expire tous les 7 jours.
 - **17 nov.** Projet sur GitHub en privé, avec un guide commun pour les IA. Membres du groupe invités. Appli installée sur les appareils du groupe, en version Premium de test. Diagrammes UML réalisés selon le cours.
 
+## Du 18 au 27 novembre : chacun sa partie
+
+- **18 nov.** Une mascotte frigo qui réagit à nos actions et propose « Annuler ». Badges du Bilan refaits en médailles qu'on peut faire tourner et retourner. Diagrammes UML ajoutés au dépôt.
+- **20 nov.** Premier rendu au professeur.
+- **24 nov.** Refonte du design « Liquid Glass » (onglets, fiche produit, nouvelles couleurs). Mise à jour des téléphones du groupe.
+- **26 nov.** Économies du Bilan calculées par rapport à un foyer moyen. Liste de courses avec des quantités logiques selon le rythme du foyer. Mode deux colonnes sur iPad. Préparation du frigo partagé en famille, sans serveur. À l'accueil, les lots d'un même produit sont réunis sur une ligne.
+- **27 nov.** Deuxième rendu au professeur.
+
 ## Ce que nous retenons
 
 | Erreur trouvée | Leçon |
@@ -46,6 +54,7 @@ L'appli est faite avec Expo (React Native), en TypeScript. Elle tourne sur iPhon
 | « Consommé » sans effet sur Android | Tester sur chaque plateforme |
 | PDF sans couleurs | Vérifier le résultat final, pas seulement le code |
 | Réponse trop sûre sur l'installation sans câble | Vérifier les sources |
+| Compte Apple gratuit plein : impossible d'ajouter un iPhone | Prévoir le compte payant avant d'agrandir l'équipe de test |
 
 Il reste à faire :
 

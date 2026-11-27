@@ -2,27 +2,25 @@ import Ionicons from '@expo/vector-icons/Ionicons';
 import MaterialCommunityIcons from '@expo/vector-icons/MaterialCommunityIcons';
 import { router } from 'expo-router';
 import { useMemo, useState } from 'react';
-import { Pressable, ScrollView, Share, Text, TextInput, View } from 'react-native';
+import { Pressable, Share, Text, TextInput, View } from 'react-native';
 import Animated, { FadeIn, FadeOut, LayoutAnimationConfig, LinearTransition } from 'react-native-reanimated';
 
 import { EmptyState } from '@/components/EmptyState';
 import { Button } from '@/components/ui/Button';
-import { Chip } from '@/components/ui/Chip';
-import { IconButton } from '@/components/ui/IconButton';
-import { Screen, ScreenHeader, SectionTitle } from '@/components/ui/Screen';
+import { ScreenHeader, SectionTitle } from '@/components/ui/Screen';
+import { GlassButton, GlassHeader, GlassHeaderSpacer, GlassSurface, useGlassScroll } from '@/components/glass';
 import { CATEGORIES, categoryTone } from '@/constants/catalog';
 import { useToast } from '@/features/feedback/ToastProvider';
 import { useProducts } from '@/features/products/ProductsProvider';
-import {
-  formatShoppingList,
-  groupShoppingItems,
-  SHOPPING_NAME_MAX_LENGTH,
-  suggestRestock,
-} from '@/features/shopping/shoppingLogic';
+import { RestockList } from '@/components/shopping/RestockList';
+import { householdEquivalents, householdLabel, shopIntervalDays, suggestRestock } from '@/features/shopping/restockPlan';
+import { formatShoppingList, groupShoppingItems, SHOPPING_NAME_MAX_LENGTH } from '@/features/shopping/shoppingLogic';
+import { useSettings } from '@/features/settings/SettingsProvider';
 import { useShopping } from '@/features/shopping/ShoppingProvider';
 import { useLayout } from '@/hooks/useLayout';
 import { useToday } from '@/hooks/useToday';
 import { MIN_TOUCH, PRESSED, fontSize, makeStyles, radius, spacing, useTheme } from '@/theme';
+import { glassRadius } from '@/theme/liquidGlass';
 import type { ShoppingItem } from '@/types/shopping';
 import { parseLocalDate } from '@/utils/date';
 import { haptics } from '@/utils/haptics';
@@ -37,6 +35,7 @@ export default function ShoppingScreen() {
   const { colors } = useTheme();
   const styles = useStyles();
   const { gutter } = useLayout();
+  const { ref: scrollRef, scrollY, contentInsets, indicatorInsets } = useGlassScroll<Animated.ScrollView>(spacing.xxl * 2);
   const today = useToday();
   const { products } = useProducts();
   const { items, pendingCount, addItems, toggleItem, removeItem, restoreItem, clearChecked } = useShopping();
@@ -44,13 +43,23 @@ export default function ShoppingScreen() {
   const [draft, setDraft] = useState('');
 
   const { sections, checked } = useMemo(() => groupShoppingItems(items), [items]);
-  const suggestions = useMemo(() => suggestRestock(products, items, parseLocalDate(today)), [products, items, today]);
+  const household = useSettings().settings.household;
+  const suggestions = useMemo(
+    () => suggestRestock(products, items, { household, now: parseLocalDate(today), limit: 6 }),
+    [products, items, today, household],
+  );
+  const interval = useMemo(() => shopIntervalDays(products), [products]);
 
   const fail = () => showToast({ tone: 'error', message: 'La liste n’a pas pu être modifiée. Réessayez.' });
 
-  const add = async (name: string, source: 'manual' | 'restock' = 'manual', category?: ShoppingItem['category']) => {
+  const add = async (
+    name: string,
+    source: 'manual' | 'restock' = 'manual',
+    category?: ShoppingItem['category'],
+    quantity?: string,
+  ) => {
     try {
-      const { added, duplicates } = await addItems([{ name, source, category }]);
+      const { added, duplicates } = await addItems([{ name, source, category, quantity }]);
       if (added.length > 0) haptics.light();
       else if (duplicates.length > 0) showToast({ tone: 'neutral', message: `« ${duplicates[0]} » est déjà sur la liste.` });
     } catch {
@@ -94,9 +103,11 @@ export default function ShoppingScreen() {
   const isEmpty = items.length === 0;
 
   return (
-    <Screen>
-      <ScrollView
-        contentContainerStyle={[styles.content, { paddingHorizontal: gutter }]}
+    <View style={styles.screen}>
+      <Animated.ScrollView
+        ref={scrollRef}
+        contentContainerStyle={[contentInsets, { paddingHorizontal: gutter }]}
+        scrollIndicatorInsets={indicatorInsets}
         keyboardShouldPersistTaps="handled"
         keyboardDismissMode="on-drag"
       >
@@ -105,10 +116,11 @@ export default function ShoppingScreen() {
           <ScreenHeader
             title="Courses"
             subtitle={pendingCount > 0 ? `${pluralize(pendingCount, 'article')} à acheter` : 'Achetez juste ce qu’il faut.'}
-            right={pendingCount > 0 ? <IconButton icon="share-outline" label="Partager la liste" onPress={share} /> : null}
+            right={pendingCount > 0 ? <GlassHeaderSpacer count={1} /> : null}
           />
 
-          <View style={styles.addBar}>
+          {/* Champ en verre, comme les champs de recherche d’iOS 26 : c’est une commande, pas du contenu. */}
+          <GlassSurface material="regular" radius={glassRadius.pill} style={styles.addBar}>
             <Ionicons name="add-circle" size={24} color={colors.primary} />
             <TextInput
               value={draft}
@@ -134,7 +146,7 @@ export default function ShoppingScreen() {
                 <Text style={styles.addButtonText}>Ajouter</Text>
               </Pressable>
             ) : null}
-          </View>
+          </GlassSurface>
 
           <Pressable
             onPress={() => router.push('/receipt')}
@@ -153,25 +165,24 @@ export default function ShoppingScreen() {
 
           {suggestions.length > 0 ? (
             <>
-              <SectionTitle title="À racheter ?" caption="Vous les achetez souvent et il n’y en a plus dans votre frigo." />
-              <ScrollView
-                horizontal
-                showsHorizontalScrollIndicator={false}
-                contentContainerStyle={styles.chips}
-                keyboardShouldPersistTaps="handled"
-              >
-                {suggestions.map((s) => (
-                  <Chip
-                    key={s.name}
-                    size="sm"
-                    icon="add"
-                    label={s.name}
-                    selected={false}
-                    accessibilityLabel={`Ajouter ${s.name} à la liste`}
-                    onPress={() => void add(s.name, 'restock', s.category)}
-                  />
-                ))}
-              </ScrollView>
+              <SectionTitle
+                title="À racheter ?"
+                caption={`De quoi tenir jusqu’à vos prochaines courses (environ ${pluralize(interval, 'jour').replace(' ', '\u00a0')})${
+                  household ? `, pour ${householdLabel(household)}` : ''
+                }.`}
+              />
+              <RestockList suggestions={suggestions} onAdd={(s) => void add(s.name, 'restock', s.category, s.quantity)} />
+              {householdEquivalents(household) === null ? (
+                <Pressable
+                  onPress={() => router.push({ pathname: '/settings', params: { section: 'foyer' } })}
+                  accessibilityRole="link"
+                  accessibilityLabel="Indiquer la taille du foyer dans les réglages"
+                  style={({ pressed }) => [styles.householdLink, pressed && PRESSED]}
+                >
+                  <Ionicons name="people-outline" size={16} color={colors.primary} />
+                  <Text style={styles.householdLinkText}>Combien êtes-vous à la maison ? Les quantités seront plus justes.</Text>
+                </Pressable>
+              ) : null}
             </>
           ) : null}
 
@@ -218,8 +229,14 @@ export default function ShoppingScreen() {
             </Animated.View>
           ) : null}
         </LayoutAnimationConfig>
-      </ScrollView>
-    </Screen>
+      </Animated.ScrollView>
+      <GlassHeader
+        title="Courses"
+        scrollY={scrollY}
+        threshold={24}
+        right={pendingCount > 0 ? <GlassButton icon="share-outline" iconOnly label="Partager la liste" onPress={share} /> : null}
+      />
+    </View>
   );
 }
 
@@ -291,19 +308,16 @@ function ItemRow({ item, first, onToggle, onRemove, onStore }: ItemRowProps) {
 }
 
 const useStyles = makeStyles(({ colors }) => ({
-  content: { paddingBottom: spacing.xxl * 2 },
+  screen: { flex: 1 },
   flex: { flex: 1 },
   addBar: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: spacing.sm,
     minHeight: MIN_TOUCH + 8,
-    paddingHorizontal: spacing.md,
+    paddingLeft: spacing.md,
+    paddingRight: spacing.sm,
     marginTop: spacing.md,
-    backgroundColor: colors.surface,
-    borderRadius: radius.lg,
-    borderWidth: 1,
-    borderColor: colors.border,
   },
   input: { flex: 1, fontSize: fontSize.body, color: colors.text, paddingVertical: spacing.md },
   addButton: {
@@ -333,7 +347,14 @@ const useStyles = makeStyles(({ colors }) => ({
   receiptTitle: { fontSize: fontSize.body, fontWeight: '700', color: colors.text },
   receiptText: { fontSize: fontSize.caption, color: colors.textMuted, marginTop: 1 },
   help: { fontSize: fontSize.caption, color: colors.textSubtle, marginTop: spacing.lg, marginHorizontal: spacing.xs },
-  chips: { gap: spacing.sm, paddingRight: spacing.lg },
+  householdLink: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.xs + 2,
+    minHeight: MIN_TOUCH,
+    paddingHorizontal: spacing.xs,
+  },
+  householdLinkText: { flex: 1, fontSize: fontSize.caption, fontWeight: '600', color: colors.primary },
   card: {
     backgroundColor: colors.surface,
     borderRadius: radius.lg,

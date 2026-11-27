@@ -1,6 +1,6 @@
 import { useIsFocused } from 'expo-router';
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { AccessibilityInfo, Pressable, StyleSheet, useWindowDimensions, View } from 'react-native';
+import { AccessibilityInfo, Pressable, StyleSheet, View } from 'react-native';
 import Animated, {
   cancelAnimation,
   Easing,
@@ -15,10 +15,13 @@ import Animated, {
 } from 'react-native-reanimated';
 import Svg, { Circle, Ellipse, G, Path, Rect, Text as SvgText } from 'react-native-svg';
 
+import { useGlassTabBarTop } from '@/components/glass';
 import { SpeechBubble, type BubbleAction } from '@/components/mascot/SpeechBubble';
 import { TOAST_CLEARANCE } from '@/components/ui/Toast';
 import { useToastVisible } from '@/features/feedback/ToastProvider';
 import { mascotPose, subscribeMascotMood, type MascotFace, type MascotMood } from '@/features/mascot/mascot';
+import type { MascotId } from '@/features/mascot/mascots';
+import { useSettings } from '@/features/settings/SettingsProvider';
 import {
   greetingLine,
   isTappingTooFast,
@@ -32,6 +35,7 @@ import {
   type FridgeSnapshot,
   type Line,
 } from '@/features/mascot/mascotLines';
+import { useLayout } from '@/hooks/useLayout';
 import { spacing } from '@/theme';
 import { lightPalette } from '@/theme/tokens';
 import { toLocalDateString } from '@/utils/date';
@@ -200,67 +204,160 @@ interface FridgeMascotProps {
   /** Largeur en points ; la hauteur suit les proportions du dessin. */
   size?: number;
   face?: MascotFace;
+  /** Personnage dessiné (Réglages › Apparence) ; le frigo par défaut. */
+  kind?: MascotId;
 }
 
-/** Mascotte SmartFridge : un frigo à deux portes qui salue, avec la feuille du logo sur la tête. */
-export function FridgeMascot({ size = 120, face = 'normal' }: FridgeMascotProps) {
+/** Bras qui salue et main sur la hanche : communs à toutes les mascottes (même gabarit de 64 pt de large). */
+function Arms() {
   return (
-    <Svg width={size} height={(size * VIEW_H) / VIEW_W} viewBox={`0 0 ${VIEW_W} ${VIEW_H}`}>
-      {/* Dessin retourné : la mascotte se tourne vers la droite, vers sa bulle et la liste. */}
-      <G transform={`translate(${VIEW_W} 0) scale(-1 1)`}>
-        {/* Feuille sur la tête */}
+    <>
+      {/* Bras qui salue : contour épais puis remplissage, pour un trait de dessin animé */}
+      <G>
+        <Path d="M27 74 Q14 70 13 56" stroke={OUTLINE} strokeWidth={10} strokeLinecap="round" fill="none" />
+        <Path d="M27 74 Q14 70 13 56" stroke={colors.surface} strokeWidth={5} strokeLinecap="round" fill="none" />
         <Path
-          d="M60 26 C52 22 46 14 50 8 C54 10 55 4 60 4 C64 2 68 8 72 6 C76 10 74 16 78 18 C74 24 66 26 60 26 Z"
-          fill={colors.success}
+          d="M7 52 C5 46 6 40 9 40 C10 36 13 36 14 39 C15 35 18 35 19 39 C21 38 23 40 22 44 C25 44 25 48 21 52 C18 56 10 57 7 52 Z"
+          fill={colors.surface}
           stroke={OUTLINE}
           strokeWidth={STROKE}
           strokeLinejoin="round"
         />
-        <Path d="M60 25 Q63 15 70 9" stroke={colors.successSoft} strokeWidth={1.6} strokeLinecap="round" fill="none" />
+      </G>
+      {/* Main sur la hanche */}
+      <Path d="M90 92 Q104 96 98 112 Q94 116 90 112" fill={colors.surface} stroke={OUTLINE} strokeWidth={STROKE} />
+    </>
+  );
+}
 
-        {/* Jambes (cachées derrière la barre du bas, utiles ailleurs) */}
-        <Rect x={40} y={140} width={11} height={14} rx={5} fill={colors.surface} stroke={OUTLINE} strokeWidth={STROKE} />
-        <Rect x={68} y={140} width={11} height={14} rx={5} fill={colors.surface} stroke={OUTLINE} strokeWidth={STROKE} />
+/** Jambes (cachées derrière la barre du bas, utiles ailleurs). */
+function Legs() {
+  return (
+    <>
+      <Rect x={40} y={140} width={11} height={14} rx={5} fill={colors.surface} stroke={OUTLINE} strokeWidth={STROKE} />
+      <Rect x={68} y={140} width={11} height={14} rx={5} fill={colors.surface} stroke={OUTLINE} strokeWidth={STROKE} />
+    </>
+  );
+}
 
-        {/* Flanc (relief) */}
-        <Rect x={34} y={26} width={64} height={118} rx={13} fill={colors.infoSoft} stroke={OUTLINE} strokeWidth={STROKE} />
-        {/* Façade */}
-        <Rect x={26} y={24} width={64} height={120} rx={13} fill={colors.surface} stroke={OUTLINE} strokeWidth={STROKE} />
-        {/* Reflet */}
-        <Path d="M32 40 Q32 30 40 29" stroke={colors.infoSoft} strokeWidth={3} strokeLinecap="round" fill="none" />
-        {/* Séparation des portes */}
-        <Path d="M27 88 H89" stroke={OUTLINE} strokeWidth={STROKE} />
+/** Le frigo à deux portes, avec la feuille du logo sur la tête. */
+function FridgeBody({ face }: { face: MascotFace }) {
+  return (
+    <>
+      {/* Feuille sur la tête */}
+      <Path
+        d="M60 26 C52 22 46 14 50 8 C54 10 55 4 60 4 C64 2 68 8 72 6 C76 10 74 16 78 18 C74 24 66 26 60 26 Z"
+        fill={colors.success}
+        stroke={OUTLINE}
+        strokeWidth={STROKE}
+        strokeLinejoin="round"
+      />
+      <Path d="M60 25 Q63 15 70 9" stroke={colors.successSoft} strokeWidth={1.6} strokeLinecap="round" fill="none" />
+      <Legs />
+      {/* Flanc (relief) */}
+      <Rect x={34} y={26} width={64} height={118} rx={13} fill={colors.infoSoft} stroke={OUTLINE} strokeWidth={STROKE} />
+      {/* Façade */}
+      <Rect x={26} y={24} width={64} height={120} rx={13} fill={colors.surface} stroke={OUTLINE} strokeWidth={STROKE} />
+      {/* Reflet */}
+      <Path d="M32 40 Q32 30 40 29" stroke={colors.infoSoft} strokeWidth={3} strokeLinecap="round" fill="none" />
+      {/* Séparation des portes */}
+      <Path d="M27 88 H89" stroke={OUTLINE} strokeWidth={STROKE} />
+      {/* Poignées */}
+      <Rect x={34} y={77} width={22} height={6} rx={3} fill={colors.infoSoft} stroke={OUTLINE} strokeWidth={2} />
+      <Rect x={34} y={98} width={22} height={6} rx={3} fill={colors.infoSoft} stroke={OUTLINE} strokeWidth={2} />
+      {/* Afficheur de température */}
+      <Rect x={64} y={76} width={20} height={8} rx={2} fill={colors.text} />
+      {/* Visage légèrement décalé : la tête est tournée, le regard part vers la droite. */}
+      <G transform="translate(-5 0)">
+        <Face face={face} />
+      </G>
+      <Arms />
+    </>
+  );
+}
 
-        {/* Poignées */}
-        <Rect x={34} y={77} width={22} height={6} rx={3} fill={colors.infoSoft} stroke={OUTLINE} strokeWidth={2} />
-        <Rect x={34} y={98} width={22} height={6} rx={3} fill={colors.infoSoft} stroke={OUTLINE} strokeWidth={2} />
-        {/* Afficheur de température */}
-        <Rect x={64} y={76} width={20} height={8} rx={2} fill={colors.text} />
+/** Un bocal de confiture maison : couvercle à carreaux, verre bleuté, confiture et étiquette. */
+function JarBody({ face }: { face: MascotFace }) {
+  return (
+    <>
+      <Legs />
+      {/* Verre (relief) */}
+      <Rect x={32} y={30} width={64} height={114} rx={20} fill={colors.infoSoft} stroke={OUTLINE} strokeWidth={STROKE} />
+      {/* Verre (face) */}
+      <Rect x={24} y={30} width={68} height={114} rx={20} fill={colors.surface} stroke={OUTLINE} strokeWidth={STROKE} />
+      {/* Confiture, vue à travers le verre */}
+      <Path d="M27 96 Q58 88 89 96 V124 Q89 141 72 141 H44 Q27 141 27 124 Z" fill={colors.chartDiscarded} />
+      <Path d="M33 101 Q45 97 55 99" stroke={colors.warningSoft} strokeWidth={2} strokeLinecap="round" fill="none" />
+      {/* Étiquette */}
+      <Rect x={36} y={106} width={44} height={22} rx={4} fill={colors.surface} stroke={OUTLINE} strokeWidth={2} />
+      <Path d="M43 114 H73 M47 120 H69" stroke={colors.textSubtle} strokeWidth={2} strokeLinecap="round" />
+      {/* Reflet du verre */}
+      <Path d="M30 52 Q30 38 40 36" stroke={colors.infoSoft} strokeWidth={3} strokeLinecap="round" fill="none" />
+      {/* Col et couvercle à carreaux */}
+      <Rect x={30} y={22} width={56} height={10} rx={3} fill={colors.infoSoft} stroke={OUTLINE} strokeWidth={STROKE} />
+      <Rect x={22} y={8} width={72} height={16} rx={5} fill={colors.danger} stroke={OUTLINE} strokeWidth={STROKE} />
+      <Path d="M34 9 V23 M46 9 V23 M58 9 V23 M70 9 V23 M82 9 V23 M23 16 H93" stroke={colors.dangerSoft} strokeWidth={2.4} />
+      <G transform="translate(-5 0)">
+        <Face face={face} />
+      </G>
+      <Arms />
+    </>
+  );
+}
 
-        {/* Visage légèrement décalé : la tête est tournée, le regard part vers la droite. */}
-        <G transform="translate(-5 0)">
-          <Face face={face} />
-        </G>
+/** Une brique de lait : toit à pignon, bouchon orange, bandeau bleu à vague. */
+function CartonBody({ face }: { face: MascotFace }) {
+  return (
+    <>
+      <Legs />
+      {/* Côté (relief) */}
+      <Path
+        d="M90 40 L100 34 V138 L90 144 Z"
+        fill={colors.infoSoft}
+        stroke={OUTLINE}
+        strokeWidth={STROKE}
+        strokeLinejoin="round"
+      />
+      <Path d="M90 40 L74 14 L84 10 L100 34 Z" fill={colors.info} stroke={OUTLINE} strokeWidth={STROKE} strokeLinejoin="round" />
+      {/* Face */}
+      <Rect x={26} y={38} width={64} height={106} rx={6} fill={colors.surface} stroke={OUTLINE} strokeWidth={STROKE} />
+      {/* Toit à pignon et pli du haut */}
+      <Path d="M26 40 L50 14 H74 L90 40 Z" fill={colors.infoSoft} stroke={OUTLINE} strokeWidth={STROKE} strokeLinejoin="round" />
+      <Rect x={48} y={6} width={28} height={9} rx={2} fill={colors.surface} stroke={OUTLINE} strokeWidth={STROKE} />
+      {/* Bouchon */}
+      <Rect x={66} y={22} width={12} height={9} rx={3} fill={colors.chartDiscarded} stroke={OUTLINE} strokeWidth={2} />
+      {/* Bandeau bleu à vague */}
+      <Path d="M27 112 Q42 104 58 112 T89 112 V138 Q89 143 84 143 H32 Q27 143 27 138 Z" fill={colors.info} />
+      <Path d="M27 112 Q42 104 58 112 T89 112" stroke={OUTLINE} strokeWidth={2} fill="none" />
+      <Path d="M36 126 H58" stroke={colors.surface} strokeWidth={3} strokeLinecap="round" />
+      {/* Reflet */}
+      <Path d="M32 56 Q32 46 39 44" stroke={colors.infoSoft} strokeWidth={3} strokeLinecap="round" fill="none" />
+      {/* Visage sous le toit */}
+      <G transform="translate(-5 18)">
+        <Face face={face} />
+      </G>
+      <Arms />
+    </>
+  );
+}
 
-        {/* Bras qui salue : contour épais puis remplissage, pour un trait de dessin animé */}
-        <G>
-          <Path d="M27 74 Q14 70 13 56" stroke={OUTLINE} strokeWidth={10} strokeLinecap="round" fill="none" />
-          <Path d="M27 74 Q14 70 13 56" stroke={colors.surface} strokeWidth={5} strokeLinecap="round" fill="none" />
-          <Path
-            d="M7 52 C5 46 6 40 9 40 C10 36 13 36 14 39 C15 35 18 35 19 39 C21 38 23 40 22 44 C25 44 25 48 21 52 C18 56 10 57 7 52 Z"
-            fill={colors.surface}
-            stroke={OUTLINE}
-            strokeWidth={STROKE}
-            strokeLinejoin="round"
-          />
-        </G>
-        {/* Main sur la hanche */}
-        <Path d="M90 92 Q104 96 98 112 Q94 116 90 112" fill={colors.surface} stroke={OUTLINE} strokeWidth={STROKE} />
+/**
+ * Mascotte SmartFridge (le frigo par défaut, ou un autre personnage choisi dans les Réglages). Tous
+ * partagent le même gabarit, le même visage et les mêmes bras : expressions et animations communes.
+ */
+export function FridgeMascot({ size = 120, face = 'normal', kind = 'fridge' }: FridgeMascotProps) {
+  return (
+    <Svg width={size} height={(size * VIEW_H) / VIEW_W} viewBox={`0 0 ${VIEW_W} ${VIEW_H}`}>
+      {/* Dessin retourné : la mascotte se tourne vers la droite, vers sa bulle et la liste. */}
+      <G transform={`translate(${VIEW_W} 0) scale(-1 1)`}>
+        {kind === 'jar' ? <JarBody face={face} /> : kind === 'carton' ? <CartonBody face={face} /> : <FridgeBody face={face} />}
       </G>
       {/* Hors du miroir, pour rester lisible. */}
-      <SvgText x={VIEW_W - 74} y={82} fontSize={5.5} fontWeight="700" fill={colors.infoSoft} textAnchor="middle">
-        3°
-      </SvgText>
+      {kind === 'fridge' ? (
+        <SvgText x={VIEW_W - 74} y={82} fontSize={5.5} fontWeight="700" fill={colors.infoSoft} textAnchor="middle">
+          3°
+        </SvgText>
+      ) : null}
     </Svg>
   );
 }
@@ -277,8 +374,12 @@ const REACTION_MS = 1800;
 /** Bulle : à droite de la tête, pointe sur le côté de la tête, bulle au-dessus du bouton « Ajouter ». */
 const BUBBLE_LEFT = 91;
 const BUBBLE_BOTTOM = 86;
+/** Une bulle de BD reste courte : sur iPad, elle ne s’étire pas sur toute la largeur. */
+const BUBBLE_MAX_WIDTH = 340;
 /** Délai avant le bonjour : le temps que l’écran s’installe et que la mascotte sorte. */
 const GREETING_DELAY_MS = 1100;
+/** Profondeur (pt) à laquelle la mascotte s’enfonce derrière la barre d’onglets. */
+const TAB_BAR_TUCK = 10;
 
 const quad = { duration: 1100, easing: Easing.inOut(Easing.quad) };
 const bounce = { damping: 9, stiffness: 220 };
@@ -295,6 +396,8 @@ interface PeekingFridgeMascotProps {
   scrolled?: boolean;
   /** Une ligne est ouverte par un balayage : son panneau « Consommé » ne doit pas être caché. */
   rowOpen?: boolean;
+  /** Tablette en deux colonnes : la mascotte se cale sous la colonne de gauche (résumé). */
+  wide?: boolean;
 }
 
 /**
@@ -304,10 +407,24 @@ interface PeekingFridgeMascotProps {
  * jeté, avec « Annuler » (elle remplace alors le message du bas), une réplique quand on la touche.
  * Le dessin est décoratif ; la bulle est lue par le lecteur d’écran.
  */
-export function PeekingFridgeMascot({ fridge, ready, scrolled = false, rowOpen = false }: PeekingFridgeMascotProps) {
+export function PeekingFridgeMascot({
+  fridge,
+  ready,
+  scrolled = false,
+  rowOpen = false,
+  wide = false,
+}: PeekingFridgeMascotProps) {
+  // Personnage choisi dans les Réglages (le frigo par défaut).
+  const mascotKind = useSettings().settings.mascot;
   const reduceMotion = useReducedMotion();
   const focused = useIsFocused();
-  const { width } = useWindowDimensions();
+  // Sur iPad, la mascotte se cale sur la colonne de contenu, pas sur le bord de l’écran.
+  const layout = useLayout();
+  const { width } = layout;
+  const gutter = wide ? layout.wideGutter : layout.gutter;
+  const bubbleLeft = gutter - spacing.lg + BUBBLE_LEFT;
+  // Elle sort du haut de la barre d’onglets flottante ; son bas, coupé net, reste caché derrière le verre.
+  const tabBarTop = useGlassTabBarTop() - TAB_BAR_TUCK;
   const [face, setFace] = useState<MascotFace>('normal');
   const [speech, setSpeechState] = useState<{ line: Line; action?: BubbleAction } | null>(null);
   const resetTimer = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
@@ -493,26 +610,26 @@ export function PeekingFridgeMascot({ fridge, ready, scrolled = false, rowOpen =
   const containerStyle = useAnimatedStyle(() => ({ transform: [{ translateY: -aboveToast.get() }] }));
 
   return (
-    <Animated.View pointerEvents="box-none" style={[styles.stage, containerStyle]}>
+    <Animated.View pointerEvents="box-none" style={[styles.stage, { bottom: tabBarTop }, containerStyle]}>
       {/* La barre du bas cache ce qui dépasse en dessous : c’est ce qui la fait « sortir » de la barre. */}
       {/* Le dessin est décoratif ; la bulle, elle, est lue par le lecteur d’écran. */}
       <View
-        style={styles.clip}
+        style={[styles.clip, { left: gutter }]}
         pointerEvents="box-none"
         accessibilityElementsHidden
         importantForAccessibility="no-hide-descendants"
       >
         <Animated.View style={[styles.mascot, style]} pointerEvents={tucked ? 'none' : 'auto'}>
           <Pressable onPress={onPress} accessible={false}>
-            <FridgeMascot size={PEEK_SIZE} face={spoken ? spoken.line.face : face} />
+            <FridgeMascot size={PEEK_SIZE} face={spoken ? spoken.line.face : face} kind={mascotKind} />
           </Pressable>
         </Animated.View>
       </View>
-      <View style={styles.bubble} pointerEvents="box-none">
+      <View style={[styles.bubble, { left: bubbleLeft }]} pointerEvents="box-none">
         <SpeechBubble
           text={spoken?.line.text ?? null}
           action={spoken?.action}
-          maxWidth={width - BUBBLE_LEFT - spacing.lg}
+          maxWidth={Math.min(BUBBLE_MAX_WIDTH, width - bubbleLeft - gutter)}
           onPress={hush}
         />
       </View>
@@ -521,15 +638,14 @@ export function PeekingFridgeMascot({ fridge, ready, scrolled = false, rowOpen =
 }
 
 const styles = StyleSheet.create({
-  stage: { position: 'absolute', left: 0, right: 0, bottom: 0, height: BUBBLE_BOTTOM + 160 },
+  stage: { position: 'absolute', left: 0, right: 0, height: BUBBLE_BOTTOM + 160 },
   clip: {
     position: 'absolute',
-    left: spacing.lg,
     bottom: 0,
     width: PEEK_SIZE,
     height: HEADROOM + RISE + PEEK_VISIBLE,
     overflow: 'hidden',
   },
   mascot: { marginTop: HEADROOM + RISE },
-  bubble: { position: 'absolute', left: BUBBLE_LEFT, bottom: BUBBLE_BOTTOM },
+  bubble: { position: 'absolute', bottom: BUBBLE_BOTTOM },
 });

@@ -1,8 +1,8 @@
 import Ionicons from '@expo/vector-icons/Ionicons';
 import { Pressable, Text } from 'react-native';
 import Animated, { Easing, FadeInDown, FadeOutDown } from 'react-native-reanimated';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
+import { useGlassTabBarInset } from '@/components/glass';
 import { PRESSED, fontSize, makeStyles, radius, spacing, useTheme } from '@/theme';
 
 interface ToastProps {
@@ -13,13 +13,12 @@ interface ToastProps {
   onDismiss: () => void;
 }
 
-/** Hauteur approximative de la barre d’onglets, pour ne pas la masquer. */
-const TAB_BAR_OFFSET = 64;
 /** Place occupée par un toast (deux lignes) et sa marge : décalage des boutons flottants. */
 export const TOAST_CLEARANCE = 80;
 
 export function Toast({ message, tone, actionLabel, onAction, onDismiss }: ToastProps) {
-  const insets = useSafeAreaInsets();
+  // Au-dessus de la barre d’onglets flottante (même hauteur réservée sur les autres écrans).
+  const tabBarInset = useGlassTabBarInset();
   const { colors, shadowStrong } = useTheme();
   const styles = useStyles();
   const icon = tone === 'success' ? 'checkmark-circle' : tone === 'error' ? 'alert-circle' : 'information-circle';
@@ -32,7 +31,7 @@ export function Toast({ message, tone, actionLabel, onAction, onDismiss }: Toast
       exiting={FadeOutDown.duration(220)}
       accessibilityLiveRegion="polite"
       accessibilityRole="alert"
-      style={[styles.container, shadowStrong, { bottom: insets.bottom + TAB_BAR_OFFSET }]}
+      style={[styles.container, shadowStrong, { bottom: tabBarInset }]}
     >
       <Pressable
         onPress={onDismiss}

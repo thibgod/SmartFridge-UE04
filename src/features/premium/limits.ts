@@ -75,3 +75,15 @@ export function remainingReceipts(usage: ReceiptUsage | null, now: Date, isPremi
 export function recordReceipt(usage: ReceiptUsage | null, now: Date): ReceiptUsage {
   return { month: monthKey(now), count: receiptsUsedThisMonth(usage, now) + 1 };
 }
+
+/**
+ * Parties du Bilan réservées à Premium. Les médailles (badges) n’en font pas partie : elles motivent
+ * à ne rien jeter, elles restent offertes à tous (décision d’équipe, voir PREMIUM.md).
+ */
+export type StatsFeature = 'score' | 'impact' | 'charts' | 'periods' | 'export' | 'badges';
+
+export const PREMIUM_STATS_FEATURES: ReadonlySet<StatsFeature> = new Set(['score', 'impact', 'charts', 'periods', 'export']);
+
+export function isStatsFeatureLocked(feature: StatsFeature, isPremium: boolean): boolean {
+  return !isPremium && PREMIUM_STATS_FEATURES.has(feature);
+}

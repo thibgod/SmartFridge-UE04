@@ -1,11 +1,13 @@
 import { useMemo, useState } from 'react';
 import { ScrollView, Text, View } from 'react-native';
+import Animated from 'react-native-reanimated';
 
 import { EmptyState } from '@/components/EmptyState';
 import { RecipeTile } from '@/components/recipes/RecipeTile';
 import { SearchBar } from '@/components/SearchBar';
 import { Chip } from '@/components/ui/Chip';
-import { Screen, ScreenHeader, SectionTitle } from '@/components/ui/Screen';
+import { GlassHeader, useGlassScroll } from '@/components/glass';
+import { ScreenHeader, SectionTitle } from '@/components/ui/Screen';
 import { RECIPES } from '@/data/recipes';
 import { usePlaceProducts } from '@/features/places/usePlaceProducts';
 import { recipeMatchesQuery } from '@/features/recipes/recipeIngredients';
@@ -49,7 +51,9 @@ export default function RecipesScreen() {
   const { favorites, history } = useRecipeLog();
   const threshold = useSettings().settings.urgentThresholdDays;
   const today = useToday();
-  const { gutter, contentWidth, size } = useLayout();
+  // Grille : colonne large, plus de recettes par ligne sur tablette.
+  const { wideGutter: gutter, wideContentWidth: contentWidth, gridColumns: columns } = useLayout();
+  const { ref: scrollRef, scrollY, contentInsets, indicatorInsets } = useGlassScroll<Animated.ScrollView>(spacing.xxl * 2);
   const [filter, setFilter] = useState<RecipeFilter>('all');
   const [query, setQuery] = useState('');
 
@@ -87,7 +91,6 @@ export default function RecipesScreen() {
     }
   });
 
-  const columns = size === 'compact' ? 2 : 3;
   const innerWidth = contentWidth - spacing.lg * 2;
   const tileWidth = (innerWidth - spacing.md * (columns - 1)) / columns;
   const featuredWidth = Math.min(280, innerWidth * 0.78);
@@ -115,9 +118,11 @@ export default function RecipesScreen() {
   );
 
   return (
-    <Screen>
-      <ScrollView
-        contentContainerStyle={[styles.content, { paddingHorizontal: gutter }]}
+    <View style={styles.screen}>
+      <Animated.ScrollView
+        ref={scrollRef}
+        contentContainerStyle={[contentInsets, { paddingHorizontal: gutter }]}
+        scrollIndicatorInsets={indicatorInsets}
         keyboardShouldPersistTaps="handled"
         keyboardDismissMode="on-drag"
       >
@@ -198,13 +203,14 @@ export default function RecipesScreen() {
             ))}
           </View>
         )}
-      </ScrollView>
-    </Screen>
+      </Animated.ScrollView>
+      <GlassHeader title="Recettes" scrollY={scrollY} threshold={24} />
+    </View>
   );
 }
 
 const useStyles = makeStyles(({ colors }) => ({
-  content: { paddingBottom: spacing.xxl * 2 },
+  screen: { flex: 1 },
   carousel: { gap: spacing.md, paddingRight: spacing.lg, paddingVertical: spacing.xs },
   info: { backgroundColor: colors.primarySoft, borderRadius: radius.lg, padding: spacing.lg, marginTop: spacing.lg },
   infoText: { fontSize: fontSize.body, color: colors.text, lineHeight: 22 },

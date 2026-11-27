@@ -126,7 +126,8 @@ Une build TestFlight expire **90 jours** après son envoi.
 
 ## 7. Ce qui a été préparé dans le projet
 
-- `app.json` : version `1.0.0`, build `1`, iPhone uniquement (pas de captures iPad à fournir),
+- `app.json` : version `1.0.0`, build `1`, iPhone et iPad (iPad dans toutes les orientations, captures iPad
+  13 pouces à fournir pour l’App Store, voir STORE.md),
   chiffrement standard déclaré, manifeste de confidentialité Apple (`privacyManifests`), textes d’autorisation
   en français, icône et écran de démarrage.
 - `eas.json` : profils `beta` (TestFlight, rubrique « Version bêta » visible) et `production` (App Store),

@@ -1,4 +1,4 @@
-import { toLocalDateString } from '@/utils/date';
+import { daysUntil, toLocalDateString } from '@/utils/date';
 
 import type { MascotFace, MascotMood } from './mascot';
 
@@ -26,6 +26,22 @@ export interface FridgeSnapshot {
   expired: number;
   /** Le produit le plus pressé (périmé ou à consommer vite). */
   soonest?: ProductMention;
+}
+
+/**
+ * Produit dont la mascotte parle : celui qui périme le plus tôt parmi ceux encore au frigo, périmés
+ * compris (la liste « à consommer vite » de l’accueil ne contient pas les périmés).
+ */
+export function mostPressing(
+  products: readonly { name: string; expiresAt: string; status: string }[],
+  now: Date,
+): ProductMention | undefined {
+  let best: { name: string; expiresAt: string } | undefined;
+  for (const product of products) {
+    if (product.status !== 'active') continue;
+    if (!best || product.expiresAt < best.expiresAt) best = product;
+  }
+  return best ? { name: best.name, daysLeft: daysUntil(best.expiresAt, now) } : undefined;
 }
 
 const NAME_MAX = 24;

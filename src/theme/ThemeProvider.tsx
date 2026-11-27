@@ -18,11 +18,12 @@ export interface AppTheme {
 const ThemeContext = createContext<AppTheme | null>(null);
 
 export function buildTheme(isDark: boolean, accent: AccentId = DEFAULT_ACCENT): AppTheme {
+  const colors = applyAccent(isDark ? darkPalette : lightPalette, accent, isDark);
   return {
-    colors: applyAccent(isDark ? darkPalette : lightPalette, accent, isDark),
+    colors,
     isDark,
-    shadow: elevation(isDark, 1),
-    shadowStrong: elevation(isDark, 2),
+    shadow: elevation(isDark, 1, colors.primary),
+    shadowStrong: elevation(isDark, 2, colors.primary),
   };
 }
 

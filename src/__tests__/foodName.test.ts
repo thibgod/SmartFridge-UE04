@@ -55,12 +55,16 @@ describe('illustrations : on montre l’aliment, pas son parfum', () => {
     expect(imageOf(name)).toBe(file);
   });
 
-  it.each(['Confiture de fraises', 'Pâte à tartiner', 'Salade de fruits', 'Sauce tomate', 'Tarte aux pommes', 'Chips saveur fromage'])(
-    '%s → pas de photo trompeuse du catalogue',
-    (name) => {
-      expect(findCatalogImage(name)).toBeNull();
-    },
-  );
+  it.each([
+    'Confiture de fraises',
+    'Pâte à tartiner',
+    'Salade de fruits',
+    'Sauce tomate',
+    'Tarte aux pommes',
+    'Chips saveur fromage',
+  ])('%s → pas de photo trompeuse du catalogue', (name) => {
+    expect(findCatalogImage(name)).toBeNull();
+  });
 
   it('rejette une page Wikipédia qui décrit le parfum plutôt que l’aliment', () => {
     expect(isRelevantPage('Petits pains au beurre', 'Beurre')).toBe(false);
@@ -97,7 +101,9 @@ describe('recettes et ingrédients', () => {
     expect(forRolls).not.toContain('crepes');
     expect(forRolls).not.toContain('banana-bread');
     expect(ingredientInStock({ name: 'beurre' }, [product('Petits pains au beurre')])).toBe(false);
-    expect(ingredientInStock({ name: 'pain rassis', match: ['pain', 'brioche'] }, [product('Petits pains au beurre')])).toBe(true);
+    expect(ingredientInStock({ name: 'pain rassis', match: ['pain', 'brioche'] }, [product('Petits pains au beurre')])).toBe(
+      true,
+    );
   });
 
   it('ne confond pas les préparations avec leurs ingrédients', () => {

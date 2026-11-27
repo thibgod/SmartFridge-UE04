@@ -41,14 +41,17 @@ describe('lecture de la réponse API', () => {
   });
 
   it('retire le symbole de quantité estimée (℮)', () => {
-    const parse = (quantity: string) => parseOffPayload('12345678', { status: 1, product: { product_name: 'X', quantity } })?.quantity;
+    const parse = (quantity: string) =>
+      parseOffPayload('12345678', { status: 1, product: { product_name: 'X', quantity } })?.quantity;
     expect(parse('400 g e')).toBe('400 g');
     expect(parse('1 L ℮')).toBe('1 L');
     expect(parse('6 x 125 g')).toBe('6 x 125 g');
   });
 
   it('tolère les champs absents ou mal typés', () => {
-    expect(parseOffPayload('12345678', { status: 1, product: { product_name: 42, image_front_small_url: 'http://insecure' } })).toBeNull();
+    expect(
+      parseOffPayload('12345678', { status: 1, product: { product_name: 42, image_front_small_url: 'http://insecure' } }),
+    ).toBeNull();
     expect(parseOffPayload('12345678', { status: 0 })).toBeNull();
     expect(parseOffPayload('12345678', 'oops')).toBeNull();
   });

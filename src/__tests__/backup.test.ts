@@ -62,8 +62,8 @@ describe('sauvegarde', () => {
 
 describe('réglages', () => {
   it('retombe sur les valeurs par défaut si une valeur est hors limites', () => {
-    expect(sanitizeSettings({ reminderHour: 42, reminderDaysBefore: 9, urgentThresholdDays: 3, remindersEnabled: 'oui' })).toEqual(
-      { ...DEFAULT_SETTINGS, urgentThresholdDays: 3 },
-    );
+    expect(
+      sanitizeSettings({ reminderHour: 42, reminderDaysBefore: 9, urgentThresholdDays: 3, remindersEnabled: 'oui' }),
+    ).toEqual({ ...DEFAULT_SETTINGS, urgentThresholdDays: 3 });
   });
 });

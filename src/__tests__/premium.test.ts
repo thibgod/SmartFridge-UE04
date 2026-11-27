@@ -1,5 +1,6 @@
 import { RECIPES } from '@/data/recipes';
 import {
+  isStatsFeatureLocked,
   asPremiumReason,
   FREE_PRODUCT_LIMIT,
   FREE_RECIPE_IDS,
@@ -91,5 +92,19 @@ describe('Premium et sauvegardes', () => {
     const parsed = parseBackup(forged);
     expect(parsed.settings).not.toHaveProperty('premiumCached');
     expect(parsed.settings).not.toHaveProperty('receiptUsage');
+  });
+});
+
+describe('Bilan : ce qui est offert et ce qui est réservé à Premium', () => {
+  it('offre les médailles à tous, avec ou sans Premium', () => {
+    expect(isStatsFeatureLocked('badges', false)).toBe(false);
+    expect(isStatsFeatureLocked('badges', true)).toBe(false);
+  });
+
+  it('réserve le score, l’impact, les graphiques, les périodes et l’export à Premium', () => {
+    for (const feature of ['score', 'impact', 'charts', 'periods', 'export'] as const) {
+      expect(isStatsFeatureLocked(feature, false)).toBe(true);
+      expect(isStatsFeatureLocked(feature, true)).toBe(false);
+    }
   });
 });

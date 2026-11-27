@@ -1,47 +1,105 @@
 import type { Product } from '@/types/product';
-import type { WasteStats } from '@/types/stats';
+import type { AverageComparison, WasteStats } from '@/types/stats';
 
+import { daysBetween, isValidLocalDate, toLocalDateString } from './date';
+import { DEFAULT_URGENT_THRESHOLD } from './expiry';
 import { isValidPrice, toCents } from './price';
 import { remainingShare } from './remaining';
 
 /**
+ * Part des courses alimentaires jetée par un foyer moyen, en valeur.
+ * Ordre de grandeur prudent tiré de deux sources concordantes :
+ * - WRAP / Defra (Royaume-Uni, 2021-2022) : environ 15 % des aliments achetés finissent à la poubelle ;
+ * - ADEME (France) : environ 29 kg et 108 € jetés par personne et par an à la maison.
+ * L’objectif est de situer l’utilisateur, pas de faire une mesure exacte.
+ */
+export const AVERAGE_WASTE_SHARE = 0.15;
+/** Écart (en points) en dessous duquel on se dit « dans la moyenne ». */
+const SIMILAR_MARGIN = 0.02;
+
+/**
  * Montants d’un produit clôturé. Un produit jeté après en avoir mangé une partie
  * (« il en restait ½ ») ne compte comme perdu que pour la part restante.
+ * `eatenCents` est la valeur mangée : ce n’est pas une économie (on l’aurait mangé de toute façon).
  */
-export function closedAmounts(product: Product): { savedCents: number; lostCents: number } {
+export function closedAmounts(product: Product): { eatenCents: number; lostCents: number } {
   const cents = toCents(product.price);
-  if (product.status === 'consumed') return { savedCents: cents, lostCents: 0 };
-  if (product.status !== 'discarded') return { savedCents: 0, lostCents: 0 };
+  if (product.status === 'consumed') return { eatenCents: cents, lostCents: 0 };
+  if (product.status !== 'discarded') return { eatenCents: 0, lostCents: 0 };
   const lostCents = Math.round(cents * remainingShare(product.remaining));
-  return { savedCents: cents - lostCents, lostCents };
+  return { eatenCents: cents - lostCents, lostCents };
 }
 
-export function computeWasteStats(products: readonly Product[]): WasteStats {
+/**
+ * « Sauvé de justesse » : consommé alors qu’il restait au plus `urgentThreshold` jours avant la date
+ * (ou après la date). C’est ce produit-là que l’app a aidé à ne pas jeter.
+ */
+export function isRescued(product: Product, urgentThreshold: number = DEFAULT_URGENT_THRESHOLD): boolean {
+  if (product.status !== 'consumed' || !isValidLocalDate(product.expiresAt)) return false;
+  const closed = new Date(product.closedAt ?? product.updatedAt);
+  if (Number.isNaN(closed.getTime())) return false;
+  return daysBetween(toLocalDateString(closed), product.expiresAt) <= urgentThreshold;
+}
+
+/**
+ * Économie par rapport à un foyer moyen : ce qu’il aurait jeté sur les mêmes courses,
+ * moins ce que l’utilisateur a réellement jeté. Jamais négatif.
+ */
+export function avoidedVsAverage(trackedCents: number, lostCents: number): number {
+  return Math.max(0, Math.round(trackedCents * AVERAGE_WASTE_SHARE) - lostCents);
+}
+
+/** Situe l’utilisateur par rapport au foyer moyen ; null sans produit au prix connu. */
+export function compareToAverage(stats: WasteStats): AverageComparison | null {
+  if (stats.wasteShare === null) return null;
+  const gap = stats.wasteShare - AVERAGE_WASTE_SHARE;
+  return {
+    share: stats.wasteShare,
+    averageShare: AVERAGE_WASTE_SHARE,
+    avoidedCents: stats.avoidedCents,
+    verdict: Math.abs(gap) < SIMILAR_MARGIN ? 'similar' : gap < 0 ? 'better' : 'worse',
+  };
+}
+
+export function computeWasteStats(products: readonly Product[], urgentThreshold: number = DEFAULT_URGENT_THRESHOLD): WasteStats {
   let consumedCount = 0;
   let discardedCount = 0;
-  let savedCents = 0;
+  let eatenCents = 0;
   let lostCents = 0;
+  let rescuedCount = 0;
+  let rescuedCents = 0;
   let unpricedCount = 0;
 
   for (const product of products) {
     if (product.status === 'active') continue;
-    if (!isValidPrice(product.price)) unpricedCount += 1;
+    const priced = isValidPrice(product.price);
+    if (!priced) unpricedCount += 1;
 
     const amounts = closedAmounts(product);
-    savedCents += amounts.savedCents;
+    eatenCents += amounts.eatenCents;
     lostCents += amounts.lostCents;
     if (product.status === 'consumed') consumedCount += 1;
     else discardedCount += 1;
+    if (isRescued(product, urgentThreshold)) {
+      rescuedCount += 1;
+      rescuedCents += amounts.eatenCents;
+    }
   }
 
   const closedCount = consumedCount + discardedCount;
+  const trackedCents = eatenCents + lostCents;
   return {
     consumedCount,
     discardedCount,
     closedCount,
     wasteRate: closedCount > 0 ? discardedCount / closedCount : null,
-    savedCents,
+    eatenCents,
     lostCents,
+    trackedCents,
+    wasteShare: trackedCents > 0 ? lostCents / trackedCents : null,
+    avoidedCents: avoidedVsAverage(trackedCents, lostCents),
+    rescuedCount,
+    rescuedCents,
     unpricedCount,
   };
 }
@@ -137,8 +195,13 @@ export interface PeriodComparison {
 }
 
 /** Statistiques de la période et de la période précédente, pour afficher des tendances. */
-export function comparePeriods(products: readonly Product[], period: StatsPeriod, now: Date = new Date()): PeriodComparison {
-  const current = computeWasteStats(filterClosedByPeriod(products, period, now));
+export function comparePeriods(
+  products: readonly Product[],
+  period: StatsPeriod,
+  now: Date = new Date(),
+  urgentThreshold: number = DEFAULT_URGENT_THRESHOLD,
+): PeriodComparison {
+  const current = computeWasteStats(filterClosedByPeriod(products, period, now), urgentThreshold);
   if (period === 'all') return { current, previous: null };
   const days = PERIOD_DAYS[period];
   const end = now.getTime() - days * 86_400_000;
@@ -148,7 +211,7 @@ export function comparePeriods(products: readonly Product[], period: StatsPeriod
     const t = closedDate(p).getTime();
     return t >= start && t < end;
   });
-  return { current, previous: previousItems.length > 0 ? computeWasteStats(previousItems) : null };
+  return { current, previous: previousItems.length > 0 ? computeWasteStats(previousItems, urgentThreshold) : null };
 }
 
 /** Score anti-gaspi : part des produits consommés (0 à 100), null sans historique. */
@@ -172,7 +235,10 @@ export function repeatedlyDiscarded(products: readonly Product[], limit = 3): Di
     group.count += 1;
     groups.set(key, group);
   }
-  return [...groups.values()].filter((g) => g.count >= 2).sort((a, b) => b.count - a.count).slice(0, limit);
+  return [...groups.values()]
+    .filter((g) => g.count >= 2)
+    .sort((a, b) => b.count - a.count)
+    .slice(0, limit);
 }
 
 export interface MonthlyAmounts {
@@ -190,7 +256,7 @@ export function monthlyAmounts(products: readonly Product[], months = 6, now: Da
     const bucket = byKey.get(monthKey(closedDate(product)));
     if (!bucket) continue;
     const amounts = closedAmounts(product);
-    bucket.consumedCents += amounts.savedCents;
+    bucket.consumedCents += amounts.eatenCents;
     bucket.discardedCents += amounts.lostCents;
   }
   return buckets;

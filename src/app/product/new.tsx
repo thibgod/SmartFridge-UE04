@@ -5,6 +5,7 @@ import { EmptyState } from '@/components/EmptyState';
 import { LOCATION_PHRASE, ProductForm } from '@/components/ProductForm';
 import { Button } from '@/components/ui/Button';
 import { FREE_PRODUCT_LIMIT, remainingProductSlots } from '@/features/premium/limits';
+import { allowedLots, lotInputs } from '@/features/products/lots';
 import { MAIN_PLACE, productsInPlace } from '@/features/places/places';
 import { usePlaces } from '@/features/places/PlacesProvider';
 import { usePremium } from '@/features/premium/PremiumProvider';
@@ -62,7 +63,13 @@ export default function NewProductScreen() {
 
 function NewProductForm() {
   const { barcode, scanId, copyFrom, name, category, shoppingId } = useLocalSearchParams<Params>();
-  const { addProduct, products } = useProducts();
+  const { addProduct, addProducts, products, activeProducts } = useProducts();
+  const { isPremium } = usePremium();
+  // Plusieurs lots identiques d’un coup, dans la limite des places libres de la version gratuite.
+  const [lotCount, setLotCount] = useState(1);
+  const freeSlots = remainingProductSlots(activeProducts.length, isPremium);
+  const maxLots = allowedLots(freeSlots);
+  const lots = Math.min(lotCount, maxLots);
   const { removeItem } = useShopping();
   const { showToast } = useToast();
   const { current, places } = usePlaces();
@@ -106,11 +113,15 @@ function NewProductForm() {
     setSubmitting(true);
     setSubmitError(null);
     try {
-      await addProduct(input);
+      if (lots > 1) await addProducts(lotInputs(input, lots));
+      else await addProduct(input);
       // L’article acheté quitte la liste de courses : il est désormais suivi dans l’app.
       if (shoppingId) await removeItem(shoppingId).catch(() => undefined);
       goBack();
-      showToast({ tone: 'success', message: `« ${input.name} » a été ajouté.` });
+      showToast({
+        tone: 'success',
+        message: lots > 1 ? `${lots} lots de « ${input.name} » ont été ajoutés.` : `« ${input.name} » a été ajouté.`,
+      });
     } catch {
       setSubmitError('Enregistrement impossible. Réessayez.');
       setSubmitting(false);
@@ -120,7 +131,16 @@ function NewProductForm() {
   return (
     <ProductForm
       form={form}
-      submitLabel={`Ajouter ${LOCATION_PHRASE[form.values.location]}`}
+      submitLabel={`Ajouter ${lots > 1 ? `${lots} lots ` : ''}${LOCATION_PHRASE[form.values.location]}`}
+      lots={{
+        value: lots,
+        max: maxLots,
+        onChange: setLotCount,
+        note:
+          Number.isFinite(freeSlots) && freeSlots <= lots
+            ? `Version gratuite : ${freeSlots > 1 ? `${freeSlots} places libres` : '1 place libre'} dans votre frigo.`
+            : null,
+      }}
       onSubmit={handleSubmit}
       submitting={submitting}
       submitError={submitError}

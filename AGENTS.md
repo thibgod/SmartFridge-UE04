@@ -277,10 +277,11 @@ npx jest places                  # un fichier (par nom)
 | [README.md](README.md) | Présentation, installation, architecture, choix techniques |
 | [ROADMAP.md](ROADMAP.md) | Ce qui est fait et ce qui reste à faire |
 | [PREMIUM.md](PREMIUM.md) | Décisions et état de l’abonnement |
+| [FAMILLE.md](FAMILLE.md) | Frigo partagé en famille : état de la préparation et étapes restantes |
 | [STORE.md](STORE.md) | Fiches App Store / Google Play, questionnaires de confidentialité |
 | [TESTFLIGHT.md](TESTFLIGHT.md) | Distribuer une bêta |
 | [PRIVACY.md](PRIVACY.md) | Politique de confidentialité (générée) |
-| [docs/analyse/](docs/analyse/) | Analyse UML (cours UE04, HELMo) : cas d’utilisation et diagrammes d’activité |
+| [docs/analyse/](docs/analyse/justification.md) | Analyse UML (cours UE04, HELMo) : cas d’utilisation et diagrammes d’activité, avec leur justification ; redessinés par `python3 docs/analyse/generer_diagrammes.py` |
 
 ---
 

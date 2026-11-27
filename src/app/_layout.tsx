@@ -7,6 +7,7 @@ import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { SafeAreaProvider, useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { AppErrorScreen } from '@/components/AppErrorScreen';
+import { useBackdropStyle } from '@/components/glass';
 import { AutoBackupRunner } from '@/features/backup/AutoBackupRunner';
 import { ToastProvider } from '@/features/feedback/ToastProvider';
 import { ImagesProvider } from '@/features/images/ImagesProvider';
@@ -90,6 +91,16 @@ function HorizontalSafeArea({ children }: PropsWithChildren) {
 function RootStack() {
   useNotificationNavigation();
   const { colors, isDark } = useTheme();
+  // Fond d’ambiance (halos) par défaut de toutes les feuilles : le verre a toujours quelque chose à réfracter.
+  const backdrop = useBackdropStyle();
+  const sheetBackdrop = useBackdropStyle({ warm: false });
+  // Barre de titre transparente, sans flou (le flou système ajoutait un voile gris) : le titre est posé sur
+  // le fond d’ambiance des formulaires, comme les titres des onglets. Sur iOS 26 et plus, la barre native
+  // ajoute d’elle-même un fondu discret quand le contenu défile dessous.
+  const glassHeader = {
+    headerTransparent: true,
+    headerStyle: { backgroundColor: 'transparent' },
+  };
 
   return (
     <>
@@ -100,14 +111,17 @@ function RootStack() {
           headerTintColor: colors.primary,
           headerTitleStyle: { color: colors.text, fontWeight: '700' },
           headerShadowVisible: false,
-          contentStyle: { backgroundColor: colors.background },
+          contentStyle: backdrop,
           headerBackButtonDisplayMode: 'minimal',
         }}
       >
         <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
-        <Stack.Screen name="product/new" options={{ title: 'Ajouter un produit', presentation: 'modal' }} />
+        <Stack.Screen name="product/new" options={{ title: 'Ajouter un produit', presentation: 'modal', ...glassHeader }} />
         <Stack.Screen name="product/[id]/index" options={{ headerShown: false, presentation: 'modal' }} />
-        <Stack.Screen name="product/[id]/edit" options={{ title: 'Modifier le produit', presentation: 'modal' }} />
+        <Stack.Screen
+          name="product/[id]/edit"
+          options={{ title: 'Modifier le produit', presentation: 'modal', ...glassHeader }}
+        />
         <Stack.Screen name="recipe/[id]/index" options={{ headerShown: false, presentation: 'modal' }} />
         <Stack.Screen
           name="recipe/[id]/cook"
@@ -122,16 +136,21 @@ function RootStack() {
             sheetAllowedDetents: 'fitToContents',
             sheetGrabberVisible: true,
             sheetCornerRadius: 28,
+            // Feuille ajustée à son contenu : pas de halo chaud en bas, qui s’arrêterait net sur la marge d’iOS.
+            contentStyle: sheetBackdrop,
           }}
         />
         <Stack.Screen name="scan" options={{ headerShown: false, presentation: 'fullScreenModal', animation: 'fade' }} />
-        <Stack.Screen name="shopping-item/[id]" options={{ title: 'Modifier l’article', presentation: 'modal' }} />
-        <Stack.Screen name="receipt" options={{ title: 'Ticket de caisse', presentation: 'modal' }} />
-        <Stack.Screen name="settings" options={{ title: 'Réglages', presentation: 'modal' }} />
-        <Stack.Screen name="places" options={{ title: 'Mes lieux', presentation: 'modal' }} />
+        <Stack.Screen
+          name="shopping-item/[id]"
+          options={{ title: 'Modifier l’article', presentation: 'modal', ...glassHeader }}
+        />
+        <Stack.Screen name="receipt" options={{ title: 'Ticket de caisse', presentation: 'modal', ...glassHeader }} />
+        <Stack.Screen name="settings" options={{ title: 'Réglages', presentation: 'modal', ...glassHeader }} />
+        <Stack.Screen name="places" options={{ title: 'Mes lieux', presentation: 'modal', ...glassHeader }} />
         <Stack.Screen name="premium" options={{ headerShown: false, presentation: 'modal' }} />
-        <Stack.Screen name="privacy" options={{ title: 'Confidentialité' }} />
-        <Stack.Screen name="credits" options={{ title: 'Crédits et licences' }} />
+        <Stack.Screen name="privacy" options={{ title: 'Confidentialité', ...glassHeader }} />
+        <Stack.Screen name="credits" options={{ title: 'Crédits et licences', ...glassHeader }} />
         <Stack.Screen
           name="onboarding"
           options={{ headerShown: false, presentation: 'fullScreenModal', gestureEnabled: false }}

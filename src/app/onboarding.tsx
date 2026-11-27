@@ -77,7 +77,12 @@ export default function OnboardingScreen() {
       </View>
 
       {/* Défilable : en très grand texte, le contenu ne passe plus sous les boutons. */}
-      <ScrollView key={index} style={styles.flex} contentContainerStyle={styles.body} showsVerticalScrollIndicator={false}>
+      <ScrollView
+        key={index}
+        style={styles.flex}
+        contentContainerStyle={[styles.body, styles.column]}
+        showsVerticalScrollIndicator={false}
+      >
         <View style={styles.illustration}>
           <Ionicons name={step.icon} size={64} color={colors.primary} />
         </View>
@@ -95,7 +100,7 @@ export default function OnboardingScreen() {
         </View>
       </ScrollView>
 
-      <View style={styles.bottom}>
+      <View style={[styles.bottom, styles.column]}>
         <View style={styles.dots} accessibilityLabel={`Étape ${index + 1} sur ${STEPS.length}`}>
           {STEPS.map((s, i) => (
             <View key={s.title} style={[styles.dot, i === index && styles.dotActive]} />
@@ -127,6 +132,8 @@ const useStyles = makeStyles(({ colors }) => ({
   top: { alignItems: 'flex-end', minHeight: 48 },
   skip: { paddingHorizontal: spacing.md },
   flex: { flex: 1 },
+  // iPad : une colonne de lecture, pas une page étirée sur toute la largeur.
+  column: { width: '100%', maxWidth: 560, alignSelf: 'center' },
   body: { flexGrow: 1, justifyContent: 'center', gap: spacing.md, paddingVertical: spacing.md },
   illustration: {
     width: 128,

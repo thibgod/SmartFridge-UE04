@@ -1,6 +1,7 @@
 import {
   greetingLine,
   isTappingTooFast,
+  mostPressing,
   reactionLine,
   readingTimeMs,
   shouldGreet,
@@ -124,5 +125,20 @@ describe('rythme', () => {
     expect(shouldGreet(null, at(9))).toBe(true);
     expect(shouldGreet('2026-11-18', at(21))).toBe(false);
     expect(shouldGreet('2026-11-17', at(7))).toBe(true);
+  });
+});
+
+describe('produit dont parle la mascotte', () => {
+  const now = new Date(2026, 10, 24, 15, 0);
+  const p = (name: string, expiresAt: string, status: 'active' | 'consumed' = 'active') => ({ name, expiresAt, status });
+
+  it('choisit le plus pressé, périmé compris : jamais un produit qui périme demain avant un périmé', () => {
+    const mention = mostPressing([p('Lait', '2026-11-25'), p('Yaourts', '2026-11-23'), p('Pommes', '2026-12-03')], now);
+    expect(mention).toEqual({ name: 'Yaourts', daysLeft: -1 });
+  });
+
+  it('ignore les produits déjà consommés, et rien quand le frigo est vide', () => {
+    expect(mostPressing([p('Vieux lait', '2026-11-01', 'consumed'), p('Pommes', '2026-12-03')], now)?.name).toBe('Pommes');
+    expect(mostPressing([], now)).toBeUndefined();
   });
 });

@@ -9,6 +9,7 @@ import { FoodImage } from '@/components/FoodImage';
 import { LOCATIONS } from '@/constants/catalog';
 import { CHROME_FONT_SCALE, fontSize, makeStyles, radius, spacing, useTheme } from '@/theme';
 import type { ClosedProductStatus, Product } from '@/types/product';
+import { formatDayMonth, isValidLocalDate } from '@/utils/date';
 import { getCompactExpiryLabel, getExpiryInfo } from '@/utils/expiry';
 import { haptics } from '@/utils/haptics';
 import { formatRemaining } from '@/utils/remaining';
@@ -22,6 +23,15 @@ interface ProductRowProps {
   onSwipeChange?: (open: boolean) => void;
   /** Montre le geste une fois : la ligne s’entrouvre puis se referme (astuce du premier usage). */
   demo?: boolean;
+  /**
+   * Lots du même produit réunis sur cette ligne (`product` est le plus pressé). Au-delà d’un lot,
+   * toucher la ligne affiche les lots ; « Consommé » / « Jeté » s’appliquent au plus pressé.
+   */
+  lotCount?: number;
+  /** Lots affichés sous la ligne. */
+  expanded?: boolean;
+  /** Date du lot qui se garde le plus longtemps (produit regroupé). */
+  lastExpiresAt?: string;
 }
 
 const DEMO_DELAY_MS = 900;
@@ -32,12 +42,23 @@ const DEMO_HOLD_MS = 1100;
  * vers la gauche « Jeté » : il faut ensuite toucher l’action, ce qui évite les validations par
  * mégarde (un simple bouton se touchait en faisant défiler). Le reste est dans la fiche produit.
  */
-function ProductRowComponent({ product, urgentThreshold, onPress, onClose, onSwipeChange, demo = false }: ProductRowProps) {
+function ProductRowComponent({
+  product,
+  urgentThreshold,
+  onPress,
+  onClose,
+  onSwipeChange,
+  demo = false,
+  lotCount = 1,
+  expanded = false,
+  lastExpiresAt,
+}: ProductRowProps) {
   const { colors } = useTheme();
   const styles = useStyles();
   const expiry = getExpiryInfo(product.expiresAt, new Date(), urgentThreshold);
   const tone = expiryColors(colors, expiry.level);
   const location = LOCATIONS[product.location];
+  const grouped = lotCount > 1;
   const swipeable = useRef<SwipeableMethods>(null);
   const isOpen = useRef(false);
   const notify = (open: boolean) => {
@@ -120,8 +141,17 @@ function ProductRowComponent({ product, urgentThreshold, onPress, onClose, onSwi
         <Pressable
           onPress={() => onPress(product)}
           accessibilityRole="button"
-          accessibilityLabel={`${product.name}, ${expiry.label}, ${location.label}`}
-          accessibilityHint="Ouvre la fiche du produit. Glissez vers la droite pour « consommé », vers la gauche pour « jeté »."
+          accessibilityLabel={
+            grouped
+              ? `${product.name}, ${lotCount} lots, le plus proche ${expiry.label.toLowerCase()}, ${location.label}`
+              : `${product.name}, ${expiry.label}, ${location.label}`
+          }
+          accessibilityHint={
+            grouped
+              ? `${expanded ? 'Masque' : 'Affiche'} les ${lotCount} lots. Glissez vers la droite pour « consommé », vers la gauche pour « jeté » : cela s’applique au lot le plus proche de sa date.`
+              : 'Ouvre la fiche du produit. Glissez vers la droite pour « consommé », vers la gauche pour « jeté ».'
+          }
+          accessibilityState={grouped ? { expanded } : undefined}
           accessibilityActions={[
             { name: 'consumed', label: 'Consommé' },
             { name: 'discarded', label: 'Jeté' },
@@ -134,16 +164,31 @@ function ProductRowComponent({ product, urgentThreshold, onPress, onClose, onSwi
           <FoodImage name={product.name} category={product.category} uri={product.imageUri} size={52} radius={radius.md} />
 
           <View style={styles.info}>
-            <Text style={styles.name} numberOfLines={1}>
-              {product.name}
-            </Text>
+            <View style={styles.nameRow}>
+              <Text style={styles.name} numberOfLines={1}>
+                {product.name}
+              </Text>
+              {grouped ? (
+                <View style={styles.lotBadge}>
+                  <Text style={styles.lotBadgeText} maxFontSizeMultiplier={CHROME_FONT_SCALE}>
+                    ×{lotCount}
+                  </Text>
+                </View>
+              ) : null}
+            </View>
             <View style={styles.metaRow}>
               <Ionicons name={location.icon} size={13} color={colors.textMuted} />
               <Text style={styles.meta} numberOfLines={1}>
                 {location.label}
-                {product.quantity ? ` · ${product.quantity}` : ''}
-                {product.remaining ? ` · reste ${formatRemaining(product.remaining)}` : product.openedAt ? ' · entamé' : ''}
+                {grouped
+                  ? lastExpiresAt && isValidLocalDate(lastExpiresAt) && lastExpiresAt !== product.expiresAt
+                    ? ` · jusqu’au ${formatDayMonth(lastExpiresAt)}`
+                    : ` · ${product.quantity || `${lotCount} lots`}`
+                  : `${product.quantity ? ` · ${product.quantity}` : ''}${
+                      product.remaining ? ` · reste ${formatRemaining(product.remaining)}` : product.openedAt ? ' · entamé' : ''
+                    }`}
               </Text>
+              {grouped ? <Ionicons name={expanded ? 'chevron-up' : 'chevron-down'} size={14} color={colors.textMuted} /> : null}
             </View>
           </View>
 
@@ -176,13 +221,22 @@ const useStyles = makeStyles(({ colors, shadow }) => ({
   },
   pressed: { backgroundColor: colors.surfaceMuted },
   info: { flex: 1, gap: 4 },
+  nameRow: { flexDirection: 'row', alignItems: 'center', gap: spacing.xs + 2 },
+  lotBadge: {
+    paddingHorizontal: spacing.xs + 2,
+    paddingVertical: 1,
+    borderRadius: radius.pill,
+    backgroundColor: colors.primarySoft,
+  },
+  lotBadgeText: { fontSize: fontSize.caption, fontWeight: '800', color: colors.primary, fontVariant: ['tabular-nums'] },
   name: {
+    flexShrink: 1,
     fontSize: fontSize.bodyLarge - 1,
     fontWeight: '700',
     color: colors.text,
   },
   metaRow: { flexDirection: 'row', alignItems: 'center', gap: 4 },
-  meta: { flex: 1, fontSize: fontSize.caption, color: colors.textMuted },
+  meta: { flexShrink: 1, fontSize: fontSize.caption, color: colors.textMuted },
   pill: {
     flexDirection: 'row',
     alignItems: 'center',

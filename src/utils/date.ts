@@ -96,6 +96,13 @@ export function formatShortDate(value: LocalDateString): string {
   return shortFormatter.format(parseLocalDate(value));
 }
 
+const dayMonthFormatter = new Intl.DateTimeFormat('fr-FR', { day: 'numeric', month: 'short' });
+
+/** « 21 nov. » : jour et mois, pour les dates proches (l’année est évidente). */
+export function formatDayMonth(value: LocalDateString): string {
+  return dayMonthFormatter.format(parseLocalDate(value));
+}
+
 /** Formate un horodatage ISO (date de clôture) en date courte locale. */
 export function formatIsoAsShortDate(iso: string): string {
   const date = new Date(iso);

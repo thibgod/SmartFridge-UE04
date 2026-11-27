@@ -44,8 +44,10 @@ export async function exportHistoryCsv(products: readonly Product[]): Promise<vo
 }
 
 /** Navigateur : le bilan s’ouvre dans un onglet, imprimable en PDF avec la fonction « Imprimer ». */
-export async function exportReportPdf(products: readonly Product[]): Promise<void> {
-  const url = URL.createObjectURL(new Blob([buildReportHtml(products)], { type: 'text/html;charset=utf-8' }));
+export async function exportReportPdf(products: readonly Product[], urgentThreshold?: number): Promise<void> {
+  const url = URL.createObjectURL(
+    new Blob([buildReportHtml(products, new Date(), urgentThreshold)], { type: 'text/html;charset=utf-8' }),
+  );
   window.open(url, '_blank');
   setTimeout(() => URL.revokeObjectURL(url), 60_000);
 }

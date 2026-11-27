@@ -7,7 +7,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { EmptyState } from '@/components/EmptyState';
 import { TipImage, tipTone } from '@/components/TipCard';
 import { Button } from '@/components/ui/Button';
-import { IconButton } from '@/components/ui/IconButton';
+import { GlassButton } from '@/components/glass';
 import { TIPS } from '@/data/tips';
 import { useModalTopInset } from '@/hooks/useModalTopInset';
 import { HEADING_FONT_SCALE, fontSize, makeStyles, radius, spacing, useTheme } from '@/theme';
@@ -42,11 +42,11 @@ export default function TipScreen() {
         <View style={styles.hero}>
           <TipImage tip={tip} style={styles.heroImage} width={800} creditBottom={CREDIT_BOTTOM} />
           <LinearGradient colors={['rgba(0,0,0,0.35)', 'transparent']} style={styles.heroShade} pointerEvents="none" />
-          <IconButton
+          {/* Bouton en verre posé sur la photo. */}
+          <GlassButton
             icon="close"
+            iconOnly
             label="Fermer"
-            tone="onImage"
-            size={40}
             onPress={goBack}
             style={[styles.close, { top: spacing.md + topInset }]}
           />

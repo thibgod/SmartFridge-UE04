@@ -1,4 +1,8 @@
 import { emitMascotMood, mascotPose, moodForClosedStatus, subscribeMascotMood, type MascotMood } from '@/features/mascot/mascot';
+import { isMascotId, MASCOT_ORDER } from '@/features/mascot/mascots';
+import { sanitizeSettings } from '@/repositories/settingsRepository';
+import { buildBackup, parseBackup } from '@/services/backup/format';
+import { DEFAULT_SETTINGS } from '@/types/settings';
 
 describe('mascotte', () => {
   it('est contente quand un produit est consommé et fâchée quand il est jeté', () => {
@@ -48,5 +52,23 @@ describe('position de la mascotte', () => {
   it('ne s’anime pas hors de l’écran ni avec « Réduire les animations »', () => {
     expect(mascotPose({ ...base, focused: false }).breathing).toBe(false);
     expect(mascotPose({ ...base, reduceMotion: true }).breathing).toBe(false);
+  });
+});
+
+describe('choix de la mascotte', () => {
+  it('garde le frigo par défaut et accepte les autres mascottes', () => {
+    expect(DEFAULT_SETTINGS.mascot).toBe('fridge');
+    for (const id of MASCOT_ORDER) expect(sanitizeSettings({ mascot: id }).mascot).toBe(id);
+  });
+
+  it('revient au frigo pour une valeur inconnue ou absente (anciennes sauvegardes)', () => {
+    expect(sanitizeSettings({ mascot: 'dragon' }).mascot).toBe('fridge');
+    expect(sanitizeSettings({}).mascot).toBe('fridge');
+    expect(isMascotId(42)).toBe(false);
+  });
+
+  it('suit la sauvegarde : la mascotte choisie revient à la restauration', () => {
+    const backup = buildBackup([], { ...DEFAULT_SETTINGS, mascot: 'jar' });
+    expect(parseBackup(JSON.stringify(backup)).settings?.mascot).toBe('jar');
   });
 });

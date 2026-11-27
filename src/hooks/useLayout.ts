@@ -1,24 +1,33 @@
+import { Dimensions, Platform } from 'react-native';
 import { useSafeAreaFrame } from 'react-native-safe-area-context';
 
-import { CONTENT_MAX_WIDTH, spacing } from '@/theme';
+import { computeLayout, isTabletDevice, type Layout } from '@/utils/layout';
 
-export type LayoutSize = 'compact' | 'medium' | 'expanded';
+export type { LayoutSize } from '@/utils/layout';
+
+/** Le modèle d’appareil ne change pas pendant que l’app tourne : calculé une seule fois. */
+let tabletCache: boolean | undefined;
+
+/** Tablette (iPad, tablette Android) ou téléphone. */
+export function isTablet(): boolean {
+  if (tabletCache === undefined) {
+    const screen = Dimensions.get('screen');
+    tabletCache = isTabletDevice({
+      os: Platform.OS,
+      isPad: Platform.OS === 'ios' && Platform.isPad,
+      screenWidth: screen.width,
+      screenHeight: screen.height,
+    });
+  }
+  return tabletCache;
+}
 
 /**
- * Adaptation téléphone / tablette : largeur de contenu bornée et nombre de colonnes
- * pour les grilles (conseils, recettes).
+ * Adaptation téléphone / tablette : largeur de contenu bornée, colonnes des grilles (conseils,
+ * recettes) et mode deux colonnes sur tablette à l’horizontale. Voir `computeLayout`.
  */
-export function useLayout() {
+export function useLayout(): Layout {
   // Zone sûre plutôt que fenêtre : sur l’iPhone Duo, la colonne de l’appareil photo est exclue (voir _layout).
   const { width } = useSafeAreaFrame();
-  const size: LayoutSize = width >= 1000 ? 'expanded' : width >= 600 ? 'medium' : 'compact';
-  const contentWidth = Math.min(width, CONTENT_MAX_WIDTH + spacing.lg * 2);
-  return {
-    size,
-    width,
-    /** Marge latérale qui centre le contenu sur grand écran. */
-    gutter: Math.max(spacing.lg, (width - CONTENT_MAX_WIDTH) / 2),
-    contentWidth,
-    gridColumns: size === 'compact' ? 2 : size === 'medium' ? 3 : 4,
-  };
+  return computeLayout(width, isTablet());
 }

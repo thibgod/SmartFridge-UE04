@@ -1,4 +1,10 @@
-import { buildWidgetProps, buildWidgetTimeline, buildWidgetSnapshot, parseWidgetSnapshot, propsFromSnapshot } from '@/features/widget/widgetData';
+import {
+  buildWidgetProps,
+  buildWidgetTimeline,
+  buildWidgetSnapshot,
+  parseWidgetSnapshot,
+  propsFromSnapshot,
+} from '@/features/widget/widgetData';
 import type { Product } from '@/types/product';
 
 const product = (overrides: Partial<Product>): Product => ({
@@ -48,7 +54,18 @@ describe('widget « À consommer vite »', () => {
 
 describe('copie de données du widget Android', () => {
   const active = (name: string, expiresAt: string, status: Product['status'] = 'active') =>
-    ({ id: name, name, expiresAt, status, category: 'autre', quantity: '1', location: 'frigo', source: 'manual', addedAt: '2026-11-01T08:00:00.000Z', updatedAt: '2026-11-01T08:00:00.000Z' }) as Product;
+    ({
+      id: name,
+      name,
+      expiresAt,
+      status,
+      category: 'autre',
+      quantity: '1',
+      location: 'frigo',
+      source: 'manual',
+      addedAt: '2026-11-01T08:00:00.000Z',
+      updatedAt: '2026-11-01T08:00:00.000Z',
+    }) as Product;
   const today = new Date(2026, 10, 5, 9, 0);
 
   it('sans abonnement, ne copie aucun produit et affiche l’invitation', () => {

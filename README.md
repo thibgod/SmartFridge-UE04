@@ -41,7 +41,7 @@ Application mobile iOS / Android anti-gaspillage : inventaire du frigo, du cong�
 rappels locaux avant péremption, statistiques d’économies et recettes anti-gaspi.
 
 - 100 % local : l’inventaire reste sur l’appareil (SQLite).
-- Aucun compte, aucun serveur, aucune mesure d’audience. Abonnement Premium optionnel, par les achats natifs Apple et Google.
+- Aucun compte, aucun abonnement, aucun backend, aucune analytics, aucune IA.
 - Deux appels réseau, sans donnée personnelle :
   - Open Food Facts, pour pré-remplir une fiche à partir d’un code-barres (seul le code est envoyé) ;
   - Wikimedia (Commons / Wikipédia), pour illustrer un produit sans photo (seul son nom est envoyé),

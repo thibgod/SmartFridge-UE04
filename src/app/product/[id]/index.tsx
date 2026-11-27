@@ -3,6 +3,7 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { router, useLocalSearchParams } from 'expo-router';
 import { useMemo, useState } from 'react';
 import { Alert, ScrollView, Text, View } from 'react-native';
+import Animated, { useAnimatedRef, useAnimatedStyle, useScrollOffset } from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { EmptyState } from '@/components/EmptyState';
@@ -10,7 +11,7 @@ import { expiryColors } from '@/components/ExpiryBadge';
 import { FoodImage } from '@/components/FoodImage';
 import { RecipeTile } from '@/components/recipes/RecipeTile';
 import { Button } from '@/components/ui/Button';
-import { IconButton } from '@/components/ui/IconButton';
+import { GlassButton, GlassHeader } from '@/components/glass';
 import { SettingsAction, SettingsDivider } from '@/components/ui/SettingsSection';
 import { CATEGORIES, LOCATIONS } from '@/constants/catalog';
 import { RECIPES } from '@/data/recipes';
@@ -35,6 +36,7 @@ import { formatRemaining, REMAINING_OPTIONS } from '@/utils/remaining';
 import { useModalTopInset } from '@/hooks/useModalTopInset';
 import { useToday } from '@/hooks/useToday';
 import { CHROME_FONT_SCALE, HEADING_FONT_SCALE, fontSize, makeStyles, radius, spacing, useTheme } from '@/theme';
+import { glassRadius } from '@/theme/liquidGlass';
 import type { IconName } from '@/types/content';
 import type { Product, ProductInput } from '@/types/product';
 import { formatIsoAsShortDate, formatLongDate, formatLongDateCapitalized, formatShortDate, parseLocalDate } from '@/utils/date';
@@ -76,6 +78,14 @@ function ProductDetail({ product }: { product: Product }) {
   const insets = useSafeAreaInsets();
   const topInset = useModalTopInset();
   const today = useToday();
+  // Photo vivante : parallaxe en descendant, étirement quand on tire vers le bas (comme les fiches d’iOS).
+  const scrollRef = useAnimatedRef<Animated.ScrollView>();
+  const scrollY = useScrollOffset(scrollRef);
+  const heroStyle = useAnimatedStyle(() => {
+    const y = scrollY.get();
+    if (y < 0) return { transform: [{ translateY: y / 2 }, { scale: 1 - y / HERO_HEIGHT }] };
+    return { transform: [{ translateY: y * 0.35 }] };
+  });
   const threshold = useSettings().settings.urgentThresholdDays;
   const { products, updateProduct } = useProducts();
   const { close, confirmDelete } = useProductActions();
@@ -156,27 +166,19 @@ function ProductDetail({ product }: { product: Product }) {
 
   return (
     <View style={styles.screen}>
-      <ScrollView contentContainerStyle={{ paddingBottom: insets.bottom + spacing.xxl }}>
+      <Animated.ScrollView ref={scrollRef} contentContainerStyle={{ paddingBottom: insets.bottom + spacing.xxl }}>
         <View style={styles.hero}>
-          <FoodImage
-            name={product.name}
-            category={product.category}
-            uri={product.imageUri}
-            style={styles.heroImage}
-            radius={0}
-            creditBottom={CREDIT_BOTTOM}
-          />
-          <LinearGradient colors={['rgba(0,0,0,0.35)', 'transparent']} style={styles.heroTopShade} pointerEvents="none" />
-          <View style={[styles.heroActions, { top: spacing.md + topInset }]}>
-            <IconButton
-              icon="create-outline"
-              label="Modifier"
-              tone="onImage"
-              size={40}
-              onPress={() => router.push({ pathname: '/product/[id]/edit', params: { id: product.id } })}
+          <Animated.View style={heroStyle}>
+            <FoodImage
+              name={product.name}
+              category={product.category}
+              uri={product.imageUri}
+              style={styles.heroImage}
+              radius={0}
+              creditBottom={CREDIT_BOTTOM}
             />
-            <IconButton icon="close" label="Fermer" tone="onImage" size={40} onPress={goBack} />
-          </View>
+          </Animated.View>
+          <LinearGradient colors={['rgba(0,0,0,0.35)', 'transparent']} style={styles.heroTopShade} pointerEvents="none" />
         </View>
 
         <View style={styles.sheet}>
@@ -227,18 +229,19 @@ function ProductDetail({ product }: { product: Product }) {
           ) : null}
 
           <View style={styles.primaryActions}>
-            <Button
+            <GlassButton
               label="Consommé"
               icon="checkmark-circle"
               size="lg"
+              variant="prominent"
               style={styles.flex}
               onPress={() => closeAndLeave('consumed')}
             />
-            <Button
+            <GlassButton
               label="Jeté"
               icon="trash-outline"
               size="lg"
-              variant="danger"
+              variant="destructive"
               style={styles.flex}
               onPress={() => closeAndLeave('discarded')}
             />
@@ -356,7 +359,26 @@ function ProductDetail({ product }: { product: Product }) {
             />
           </View>
         </View>
-      </ScrollView>
+      </Animated.ScrollView>
+      {/* Commandes en verre posées sur la photo, toujours à portée ; dès que la photo est passée, la barre
+          devient du verre avec le nom du produit (le contenu n’est plus coupé net en haut de la fiche). */}
+      <GlassHeader
+        title={product.name}
+        scrollY={scrollY}
+        threshold={HERO_HEIGHT - 120}
+        topInset={topInset + spacing.sm}
+        right={
+          <>
+            <GlassButton
+              icon="create-outline"
+              iconOnly
+              label="Modifier"
+              onPress={() => router.push({ pathname: '/product/[id]/edit', params: { id: product.id } })}
+            />
+            <GlassButton icon="close" iconOnly label="Fermer" onPress={goBack} />
+          </>
+        }
+      />
     </View>
   );
 }
@@ -403,14 +425,14 @@ const CREDIT_BOTTOM = radius.xxl + spacing.sm;
 const useStyles = makeStyles(({ colors }) => ({
   screen: { flex: 1, backgroundColor: colors.background },
   flex: { flex: 1 },
-  hero: { height: HERO_HEIGHT },
+  hero: { height: HERO_HEIGHT, overflow: 'visible', zIndex: 0 },
   heroImage: { width: '100%', height: HERO_HEIGHT },
   heroTopShade: { position: 'absolute', top: 0, left: 0, right: 0, height: 90 },
-  heroActions: { position: 'absolute', right: spacing.md, flexDirection: 'row', gap: spacing.sm },
   sheet: {
     marginTop: -radius.xxl,
-    borderTopLeftRadius: radius.xxl,
-    borderTopRightRadius: radius.xxl,
+    borderTopLeftRadius: glassRadius.sheet,
+    borderTopRightRadius: glassRadius.sheet,
+    zIndex: 1,
     backgroundColor: colors.background,
     paddingHorizontal: spacing.lg,
     paddingTop: spacing.xl,

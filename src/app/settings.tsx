@@ -1,13 +1,16 @@
-import { router } from 'expo-router';
-import { useState } from 'react';
+import { router, useLocalSearchParams } from 'expo-router';
+import { useEffect, useRef, useState } from 'react';
 import { ActivityIndicator, Linking, Platform, ScrollView, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { AccentPicker } from '@/components/form/AccentPicker';
 import { AppIconPicker } from '@/components/form/AppIconPicker';
+import { MascotPicker } from '@/components/form/MascotPicker';
 import { Button } from '@/components/ui/Button';
+import { ServingsStepper } from '@/components/recipes/ServingsStepper';
 import { Chip } from '@/components/ui/Chip';
-import { SegmentedControl, type Segment } from '@/components/ui/SegmentedControl';
+import { GlassSegmentedControl } from '@/components/glass';
+import type { Segment } from '@/components/ui/SegmentedControl';
 import { SettingsAction, SettingsDivider, SettingsLabel, SettingsSection, SettingsSwitch } from '@/components/ui/SettingsSection';
 import { fontSize, makeStyles, radius, spacing, useTheme } from '@/theme';
 import { appVersionLabel, IS_BETA } from '@/constants/app';
@@ -21,6 +24,7 @@ import { useSettings } from '@/features/settings/SettingsProvider';
 import { useDataActions } from '@/features/settings/useDataActions';
 import { useNotificationStatus } from '@/hooks/useNotificationStatus';
 import {
+  HOUSEHOLD_LIMITS,
   REMINDER_DAYS_OPTIONS,
   REMINDER_HOUR_OPTIONS,
   URGENT_THRESHOLD_OPTIONS,
@@ -71,12 +75,27 @@ export default function SettingsScreen() {
     haptics.select();
     void updateSettings(patch);
   };
+  // Affiché par défaut tant que rien n’est indiqué (foyer moyen en France : 2,2 personnes, INSEE).
+  const household = settings.household ?? { adults: 2, children: 0 };
+  const setHousehold = (patch: Partial<typeof household>) => void updateSettings({ household: { ...household, ...patch } });
+  // Ouvert depuis Courses (« Combien êtes-vous ? ») : on descend directement à « Votre foyer ».
+  const { section } = useLocalSearchParams<{ section?: string }>();
+  const scrollRef = useRef<ScrollView>(null);
+  const [householdY, setHouseholdY] = useState<number | null>(null);
+  useEffect(() => {
+    if (section === 'foyer' && householdY !== null) scrollRef.current?.scrollTo({ y: Math.max(0, householdY - spacing.xxl * 3) });
+  }, [section, householdY]);
 
   return (
-    <ScrollView contentContainerStyle={[styles.content, { paddingBottom: insets.bottom + spacing.xxl }]}>
+    <ScrollView
+      ref={scrollRef}
+      contentInsetAdjustmentBehavior="automatic"
+      contentContainerStyle={[styles.content, { paddingBottom: insets.bottom + spacing.xxl }]}
+    >
       <SettingsSection
         title="SmartFridge Premium"
         icon="sparkles-outline"
+        tint="violet"
         footer={
           premium.isPremium
             ? 'L’abonnement se gère et se résilie dans les réglages de votre compte App Store ou Google Play.'
@@ -125,10 +144,11 @@ export default function SettingsScreen() {
       <SettingsSection
         title="Apparence"
         icon="color-palette-outline"
+        tint="pink"
         footer="« Auto » suit le mode clair ou sombre de votre téléphone."
       >
         <SettingsLabel label="Thème">
-          <SegmentedControl
+          <GlassSegmentedControl
             segments={THEME_SEGMENTS}
             value={settings.themePreference}
             onChange={(value) => update({ themePreference: value })}
@@ -159,6 +179,10 @@ export default function SettingsScreen() {
             <SettingsDivider />
           </>
         ) : null}
+        <SettingsLabel label="Mascotte" description="Elle vous accueille et réagit à vos gestes sur l’accueil.">
+          <MascotPicker value={settings.mascot} onChange={(mascot) => update({ mascot })} />
+        </SettingsLabel>
+        <SettingsDivider />
         <SettingsSwitch
           label="Illustrations automatiques"
           description="Photos sous licence libre (Wikimedia), créditées dans « Crédits et licences ». Seul le nom du produit est envoyé."
@@ -170,6 +194,7 @@ export default function SettingsScreen() {
       <SettingsSection
         title="Rappels"
         icon="notifications-outline"
+        tint="red"
         footer={
           permission === 'granted' && settings.remindersEnabled && scheduledCount !== null
             ? `${pluralize(scheduledCount, 'rappel programmé', 'rappels programmés')} sur cet appareil.`
@@ -216,9 +241,52 @@ export default function SettingsScreen() {
         ) : null}
       </SettingsSection>
 
+      <View onLayout={(event) => setHouseholdY(event.nativeEvent.layout.y)} />
+      <SettingsSection
+        title="Votre foyer"
+        icon="people-outline"
+        tint="green"
+        footer="Sert à proposer des quantités justes dans la liste de courses, en plus de ce que vous achetez d’habitude. Un enfant de moins de 12 ans compte pour environ 0,7 adulte."
+      >
+        <SettingsLabel label="Adultes et adolescents">
+          <View style={styles.stepper}>
+            <ServingsStepper
+              value={household.adults}
+              min={HOUSEHOLD_LIMITS.adults.min}
+              max={HOUSEHOLD_LIMITS.adults.max}
+              unit={['adulte', 'adultes']}
+              onChange={(adults) => setHousehold({ adults })}
+            />
+          </View>
+        </SettingsLabel>
+        <SettingsDivider />
+        <SettingsLabel label="Enfants de moins de 12 ans">
+          <View style={styles.stepper}>
+            <ServingsStepper
+              value={household.children}
+              min={HOUSEHOLD_LIMITS.children.min}
+              max={HOUSEHOLD_LIMITS.children.max}
+              unit={['enfant', 'enfants']}
+              onChange={(children) => setHousehold({ children })}
+            />
+          </View>
+        </SettingsLabel>
+        {settings.household === null ? (
+          <>
+            <SettingsDivider />
+            <SettingsLabel label="Pas encore indiqué" description="Réglez les nombres ci-dessus, ou confirmez s’ils sont justes.">
+              <View style={styles.chips}>
+                <Chip label="C’est bien ça" selected={false} onPress={() => update({ household })} />
+              </View>
+            </SettingsLabel>
+          </>
+        ) : null}
+      </SettingsSection>
+
       <SettingsSection
         title="Mon frigo"
         icon="file-tray-full-outline"
+        tint="blue"
         footer="Utilisé pour le bandeau d’accueil, les badges orange et les recettes prioritaires."
       >
         <SettingsLabel label="« À consommer vite » à partir de">
@@ -251,6 +319,7 @@ export default function SettingsScreen() {
       <SettingsSection
         title="Sauvegarde"
         icon="cloud-download-outline"
+        tint="teal"
         footer="La sauvegarde est un simple fichier, gardé sur votre téléphone ou là où vous l’enregistrez (Fichiers, AirDrop, e-mail…). SmartFridge n’envoie rien à aucun serveur."
       >
         {Platform.OS !== 'web' ? (
@@ -281,7 +350,7 @@ export default function SettingsScreen() {
         />
       </SettingsSection>
 
-      <SettingsSection title="Données" icon="server-outline">
+      <SettingsSection title="Données" icon="server-outline" tint="gray">
         <SettingsAction
           label="Effacer l’historique"
           icon="refresh-outline"
@@ -304,7 +373,7 @@ export default function SettingsScreen() {
       </SettingsSection>
 
       {IS_BETA ? (
-        <SettingsSection title="Version bêta" icon="flask-outline">
+        <SettingsSection title="Version bêta" icon="flask-outline" tint="orange">
           <View style={styles.about}>
             <Text style={styles.aboutText}>
               Merci de tester SmartFridge ! Un bug, une idée ? Faites une capture d’écran : TestFlight propose alors d’envoyer un
@@ -315,7 +384,7 @@ export default function SettingsScreen() {
         </SettingsSection>
       ) : null}
 
-      <SettingsSection title="À propos" icon="leaf-outline">
+      <SettingsSection title="À propos" icon="leaf-outline" tint="green">
         <SettingsAction
           label="Revoir la présentation"
           icon="play-circle-outline"
@@ -368,6 +437,7 @@ function PermissionBanner({ permission, onRequest }: { permission: PermissionSta
 const useStyles = makeStyles(({ colors }) => ({
   content: { padding: spacing.lg },
   chips: { flexDirection: 'row', flexWrap: 'wrap', gap: spacing.sm },
+  stepper: { alignSelf: 'flex-start' },
   banner: {
     margin: spacing.md,
     padding: spacing.md,

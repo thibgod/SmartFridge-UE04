@@ -1,4 +1,5 @@
 import Ionicons from '@expo/vector-icons/Ionicons';
+import type { ComponentProps } from 'react';
 import { Pressable, Text, View } from 'react-native';
 
 import { PRESSED, fontSize, makeStyles, radius, spacing, useTheme } from '@/theme';
@@ -9,10 +10,21 @@ interface ServingsStepperProps {
   onChange: (value: number) => void;
   min?: number;
   max?: number;
+  /** Unité lue par VoiceOver / TalkBack (singulier, pluriel). */
+  unit?: readonly [string, string];
+  /** Icône devant le nombre (des personnes par défaut). */
+  icon?: ComponentProps<typeof Ionicons>['name'];
 }
 
 /** Nombre de personnes : les quantités de la recette suivent. */
-export function ServingsStepper({ value, onChange, min = 1, max = 12 }: ServingsStepperProps) {
+export function ServingsStepper({
+  value,
+  onChange,
+  min = 1,
+  max = 12,
+  unit = ['personne', 'personnes'],
+  icon = 'people-outline',
+}: ServingsStepperProps) {
   const { colors } = useTheme();
   const styles = useStyles();
   const step = (delta: number) => {
@@ -26,7 +38,7 @@ export function ServingsStepper({ value, onChange, min = 1, max = 12 }: Servings
       style={styles.row}
       accessible
       accessibilityRole="adjustable"
-      accessibilityLabel={`${value} personne${value > 1 ? 's' : ''}`}
+      accessibilityLabel={`${value} ${value > 1 ? unit[1] : unit[0]}`}
       accessibilityActions={[{ name: 'increment' }, { name: 'decrement' }]}
       onAccessibilityAction={(event) => step(event.nativeEvent.actionName === 'increment' ? 1 : -1)}
     >
@@ -39,7 +51,7 @@ export function ServingsStepper({ value, onChange, min = 1, max = 12 }: Servings
         <Ionicons name="remove" size={18} color={colors.primary} />
       </Pressable>
       <View style={styles.value}>
-        <Ionicons name="people-outline" size={15} color={colors.textMuted} />
+        <Ionicons name={icon} size={15} color={colors.textMuted} />
         <Text style={styles.valueText}>{value}</Text>
       </View>
       <Pressable

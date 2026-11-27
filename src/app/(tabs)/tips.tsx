@@ -1,9 +1,11 @@
 import Ionicons from '@expo/vector-icons/Ionicons';
 import { router } from 'expo-router';
-import { Pressable, ScrollView, Text, View } from 'react-native';
+import { Pressable, Text, View } from 'react-native';
+import Animated from 'react-native-reanimated';
 
 import { TipTile, tipTone } from '@/components/TipCard';
-import { Screen, ScreenHeader, SectionTitle } from '@/components/ui/Screen';
+import { GlassHeader, useGlassScroll } from '@/components/glass';
+import { ScreenHeader, SectionTitle } from '@/components/ui/Screen';
 import { TIPS } from '@/data/tips';
 import { useLayout } from '@/hooks/useLayout';
 import { HEADING_FONT_SCALE, fontSize, makeStyles, radius, spacing, useTheme } from '@/theme';
@@ -14,15 +16,20 @@ const DATE_TIPS = ['dlc', 'ddm'] as const;
 export default function TipsScreen() {
   const styles = useStyles();
   const { isDark } = useTheme();
-  const { gutter, contentWidth, size } = useLayout();
-  const columns = size === 'compact' ? 2 : 3;
+  // Grille : colonne large, plus de conseils par ligne sur tablette.
+  const { wideGutter: gutter, wideContentWidth: contentWidth, gridColumns: columns } = useLayout();
+  const { ref: scrollRef, scrollY, contentInsets, indicatorInsets } = useGlassScroll<Animated.ScrollView>(spacing.xxl * 2);
   const innerWidth = contentWidth - spacing.lg * 2;
   const tileWidth = (innerWidth - spacing.md * (columns - 1)) / columns;
   const others = TIPS.filter((tip) => !DATE_TIPS.includes(tip.id as (typeof DATE_TIPS)[number]));
 
   return (
-    <Screen>
-      <ScrollView contentContainerStyle={[styles.content, { paddingHorizontal: gutter }]}>
+    <View style={styles.screen}>
+      <Animated.ScrollView
+        ref={scrollRef}
+        contentContainerStyle={[contentInsets, { paddingHorizontal: gutter }]}
+        scrollIndicatorInsets={indicatorInsets}
+      >
         <ScreenHeader title="Conseils" subtitle="Les bons réflexes pour jeter moins, sans stress." />
 
         <SectionTitle title="DLC ou DDM ?" caption="Bien lire la date évite de jeter des produits encore bons." />
@@ -66,13 +73,14 @@ export default function TipsScreen() {
             <TipTile key={tip.id} tip={tip} width={tileWidth} />
           ))}
         </View>
-      </ScrollView>
-    </Screen>
+      </Animated.ScrollView>
+      <GlassHeader title="Conseils" scrollY={scrollY} threshold={24} />
+    </View>
   );
 }
 
 const useStyles = makeStyles(({ colors }) => ({
-  content: { paddingBottom: spacing.xxl * 2 },
+  screen: { flex: 1 },
   compare: { flexDirection: 'row', gap: spacing.md },
   compareCard: { flex: 1, borderRadius: radius.xl, padding: spacing.lg, gap: spacing.sm },
   pressed: { opacity: 0.85 },

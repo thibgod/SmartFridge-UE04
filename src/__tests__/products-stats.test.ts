@@ -1,7 +1,23 @@
 import type { Product } from '@/types/product';
 import { formatCents, parsePriceInput } from '@/utils/price';
-import { describePurchaseHistory, findSimilarActive, pastPurchases, learnedShelfLifeDays, purchaseHistory, searchProducts, selectInventory, summarizeUrgency } from '@/utils/products';
-import { computeWasteStats, filterClosedByPeriod, formatPercent, monthlyBreakdown, selectHistory, wasteByCategory } from '@/utils/stats';
+import {
+  describePurchaseHistory,
+  findSimilarActive,
+  pastPurchases,
+  learnedShelfLifeDays,
+  purchaseHistory,
+  searchProducts,
+  selectInventory,
+  summarizeUrgency,
+} from '@/utils/products';
+import {
+  computeWasteStats,
+  filterClosedByPeriod,
+  formatPercent,
+  monthlyBreakdown,
+  selectHistory,
+  wasteByCategory,
+} from '@/utils/stats';
 
 const base: Omit<Product, 'id' | 'name' | 'expiresAt'> = {
   category: 'autre',
@@ -48,7 +64,14 @@ describe('statistiques', () => {
       make({ id: '5', name: 'E', expiresAt: '2026-10-30', price: 9 }),
     ];
     const stats = computeWasteStats(products);
-    expect(stats).toMatchObject({ consumedCount: 2, discardedCount: 2, closedCount: 4, savedCents: 330, lostCents: 70, unpricedCount: 1 });
+    expect(stats).toMatchObject({
+      consumedCount: 2,
+      discardedCount: 2,
+      closedCount: 4,
+      eatenCents: 330,
+      lostCents: 70,
+      unpricedCount: 1,
+    });
     expect(formatPercent(stats.wasteRate)).toBe('50 %');
     expect(selectHistory(products).map((p) => p.id)).toEqual(['3', '2', '1', '4']);
   });
@@ -109,7 +132,15 @@ describe('prix', () => {
 });
 
 describe('doublons à l’ajout', () => {
-  const base = { category: 'autre', quantity: '1', expiresAt: '2026-10-25', location: 'frigo', source: 'manual', addedAt: '2026-10-01T08:00:00.000Z', updatedAt: '2026-10-01T08:00:00.000Z' } as const;
+  const base = {
+    category: 'autre',
+    quantity: '1',
+    expiresAt: '2026-10-25',
+    location: 'frigo',
+    source: 'manual',
+    addedAt: '2026-10-01T08:00:00.000Z',
+    updatedAt: '2026-10-01T08:00:00.000Z',
+  } as const;
   const stock = [
     { ...base, id: 'a', name: 'Yaourts nature bio', status: 'active' as const },
     { ...base, id: 'b', name: 'Lait demi-écrémé', status: 'consumed' as const },
@@ -126,8 +157,17 @@ describe('doublons à l’ajout', () => {
 
 describe('durée de conservation apprise', () => {
   const past = (name: string, added: string, expires: string, location: 'frigo' | 'placard' = 'frigo', openedAt?: string) => ({
-    id: `${name}-${added}`, name, category: 'produits_laitiers' as const, quantity: '1', expiresAt: expires, location,
-    source: 'manual' as const, status: 'consumed' as const, addedAt: `${added}T10:00:00`, updatedAt: `${added}T10:00:00`, openedAt,
+    id: `${name}-${added}`,
+    name,
+    category: 'produits_laitiers' as const,
+    quantity: '1',
+    expiresAt: expires,
+    location,
+    source: 'manual' as const,
+    status: 'consumed' as const,
+    addedAt: `${added}T10:00:00`,
+    updatedAt: `${added}T10:00:00`,
+    openedAt,
   });
 
   it('prend la médiane des achats précédents du même produit au même endroit', () => {
@@ -145,29 +185,50 @@ describe('durée de conservation apprise', () => {
 
 describe('historique d’achat dans le formulaire', () => {
   const item = (status: 'active' | 'consumed' | 'discarded', price?: number, day = '10') => ({
-    id: `${status}-${day}-${price}`, name: 'Salade', category: 'fruits_legumes' as const, quantity: '1', expiresAt: '2026-10-25',
-    location: 'frigo' as const, source: 'manual' as const, status, price, addedAt: `2026-10-${day}T10:00:00`, updatedAt: `2026-10-${day}T10:00:00`,
+    id: `${status}-${day}-${price}`,
+    name: 'Salade',
+    category: 'fruits_legumes' as const,
+    quantity: '1',
+    expiresAt: '2026-10-25',
+    location: 'frigo' as const,
+    source: 'manual' as const,
+    status,
+    price,
+    addedAt: `2026-10-${day}T10:00:00`,
+    updatedAt: `2026-10-${day}T10:00:00`,
   });
 
   it('résume les achats et signale un gaspillage récurrent', () => {
-    const h = purchaseHistory([item('discarded', 1.5, '01'), item('discarded', 1.7, '05'), item('consumed', undefined, '08'), item('active', 1.6, '12')], 'salade');
+    const h = purchaseHistory(
+      [item('discarded', 1.5, '01'), item('discarded', 1.7, '05'), item('consumed', undefined, '08'), item('active', 1.6, '12')],
+      'salade',
+    );
     expect(h).toMatchObject({ count: 4, averagePrice: 1.6, discarded: 2, consumed: 1, lastAddedAt: '2026-10-12T10:00:00' });
     expect(describePurchaseHistory(h!)).toEqual({
       text: 'Déjà acheté 4 fois, 1,60 € en moyenne. Vous en avez jeté 2 sur 3 : une plus petite quantité suffirait peut-être.',
       warn: true,
     });
-    expect(describePurchaseHistory(purchaseHistory([item('consumed', undefined, '01')], 'Salade')!)).toEqual({ text: 'Déjà acheté une fois.', warn: false });
-    expect(describePurchaseHistory(purchaseHistory([item('consumed', 2, '01'), item('consumed', undefined, '02')], 'Salade')!).text).toBe(
-      'Déjà acheté 2 fois, payé 2,00 €.',
-    );
+    expect(describePurchaseHistory(purchaseHistory([item('consumed', undefined, '01')], 'Salade')!)).toEqual({
+      text: 'Déjà acheté une fois.',
+      warn: false,
+    });
+    expect(
+      describePurchaseHistory(purchaseHistory([item('consumed', 2, '01'), item('consumed', undefined, '02')], 'Salade')!).text,
+    ).toBe('Déjà acheté 2 fois, payé 2,00 €.');
     expect(purchaseHistory([item('consumed')], 'Tomate')).toBeNull();
   });
 });
 
 describe('achats précédents sur la fiche produit', () => {
   const current = make({ id: 'now', name: 'Yaourt nature', expiresAt: '2026-11-20', addedAt: '2026-11-01T08:00:00.000Z' });
-  const past = (id: string, addedAt: string, closedAt: string, status: Product['status'], price?: number, name = 'Yaourt nature') =>
-    make({ id, name, expiresAt: '2026-10-30', addedAt, closedAt, status, price });
+  const past = (
+    id: string,
+    addedAt: string,
+    closedAt: string,
+    status: Product['status'],
+    price?: number,
+    name = 'Yaourt nature',
+  ) => make({ id, name, expiresAt: '2026-10-30', addedAt, closedAt, status, price });
 
   it('ne compte ni le produit affiché, ni un autre produit encore au frigo, ni un produit différent', () => {
     const list = [

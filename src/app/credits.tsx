@@ -96,6 +96,7 @@ export default function CreditsScreen() {
 
   return (
     <FlatList
+      contentInsetAdjustmentBehavior="automatic"
       data={photos}
       keyExtractor={(item) => item.file}
       renderItem={renderItem}

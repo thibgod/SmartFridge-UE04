@@ -43,7 +43,10 @@ describe('lecture d’un ticket de caisse', () => {
   });
 
   it('respecte la casse d’un texte déjà en minuscules et accepte plusieurs lignes par bloc', () => {
-    expect(parseReceipt(['Tomates cerises 2,50\nCoca-Cola 1,5L 1,80']).map((l) => l.name)).toEqual(['Tomates cerises', 'Coca-Cola']);
+    expect(parseReceipt(['Tomates cerises 2,50\nCoca-Cola 1,5L 1,80']).map((l) => l.name)).toEqual([
+      'Tomates cerises',
+      'Coca-Cola',
+    ]);
   });
 
   it('ne retourne rien pour un texte sans produit', () => {
@@ -88,10 +91,32 @@ describe('préparation des articles du ticket', () => {
 
 describe('ticket lu en deux colonnes (libellés puis prix)', () => {
   const VISION = [
-    'CARREFOUR CITY', '12 RUE DE LA PAIX', '75002 PARIS', '15/10/2026 18:42',
-    'CREME FRAICHE 20CL', 'YAOURT NATURE 4X125G', 'BANANES', 'LAIT DEMI ECREME 1L', 'POULET FILET 400G',
-    'COURGETTES', 'BAGUETTE TRADITION', 'LESSIVE LIQUIDE', 'SAC CABAS', 'TOTAL', 'CB',
-    '1,89', '1,25', '2,10', '1,05', '5,49', '1,80', '1,20', '8,90', '0,10', '23,78', '23,78',
+    'CARREFOUR CITY',
+    '12 RUE DE LA PAIX',
+    '75002 PARIS',
+    '15/10/2026 18:42',
+    'CREME FRAICHE 20CL',
+    'YAOURT NATURE 4X125G',
+    'BANANES',
+    'LAIT DEMI ECREME 1L',
+    'POULET FILET 400G',
+    'COURGETTES',
+    'BAGUETTE TRADITION',
+    'LESSIVE LIQUIDE',
+    'SAC CABAS',
+    'TOTAL',
+    'CB',
+    '1,89',
+    '1,25',
+    '2,10',
+    '1,05',
+    '5,49',
+    '1,80',
+    '1,20',
+    '8,90',
+    '0,10',
+    '23,78',
+    '23,78',
     'MERCI DE VOTRE VISITE',
   ];
 

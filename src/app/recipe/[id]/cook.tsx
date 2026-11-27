@@ -7,13 +7,14 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { EmptyState } from '@/components/EmptyState';
 import { Button } from '@/components/ui/Button';
-import { IconButton } from '@/components/ui/IconButton';
+import { GlassButton, GlassSurface } from '@/components/glass';
 import { RECIPES } from '@/data/recipes';
 import { isRecipeLocked } from '@/features/premium/limits';
 import { usePremium } from '@/features/premium/PremiumProvider';
 import { formatIngredient, stepTimerMinutes } from '@/features/recipes/recipeIngredients';
 import { useCookRecipe } from '@/features/recipes/useCookRecipe';
-import { HEADING_FONT_SCALE, PRESSED, fontSize, makeStyles, radius, spacing, useTheme } from '@/theme';
+import { HEADING_FONT_SCALE, PRESSED, fontSize, makeStyles, spacing, useTheme } from '@/theme';
+import { glassRadius, withAlpha } from '@/theme/liquidGlass';
 import type { Recipe } from '@/types/content';
 import { haptics } from '@/utils/haptics';
 import { pluralize } from '@/utils/text';
@@ -116,7 +117,7 @@ function CookMode({ recipe, servings }: { recipe: Recipe; servings: number }) {
             {recipe.title}
           </Text>
         </View>
-        <IconButton icon="close" label="Quitter le mode cuisine" onPress={goBack} />
+        <GlassButton icon="close" iconOnly label="Quitter le mode cuisine" onPress={goBack} />
       </View>
 
       <View style={styles.progress} accessibilityLabel={`Étape ${Math.max(0, index) + 1} sur ${total}`}>
@@ -132,17 +133,20 @@ function CookMode({ recipe, servings }: { recipe: Recipe; servings: number }) {
           accessibilityLabel={
             timerDone ? 'Minuteur terminé, toucher pour fermer' : `Minuteur : ${formatClock(remaining)}, toucher pour arrêter`
           }
-          style={({ pressed }) => [styles.timerBanner, timerDone && styles.timerBannerDone, pressed && PRESSED]}
+          style={({ pressed }) => pressed && PRESSED}
         >
-          <Ionicons
-            name={timerDone ? 'alarm' : 'timer-outline'}
-            size={22}
-            color={timerDone ? colors.onPrimary : colors.primary}
-          />
-          <Text style={[styles.timerText, timerDone && styles.timerTextDone]}>
-            {timerDone ? `C’est prêt ! (étape ${timer.step + 1})` : `${formatClock(remaining)} · étape ${timer.step + 1}`}
-          </Text>
-          <Ionicons name="close" size={18} color={timerDone ? colors.onPrimary : colors.textMuted} />
+          {/* Minuteur sur une plaque de verre, teintée par l’accent quand c’est prêt. */}
+          <GlassSurface material="regular" prominent={timerDone} radius={glassRadius.control} style={styles.timerBanner}>
+            <Ionicons
+              name={timerDone ? 'alarm' : 'timer-outline'}
+              size={22}
+              color={timerDone ? colors.onPrimary : colors.primary}
+            />
+            <Text style={[styles.timerText, timerDone && styles.timerTextDone]}>
+              {timerDone ? `C’est prêt ! (étape ${timer.step + 1})` : `${formatClock(remaining)} · étape ${timer.step + 1}`}
+            </Text>
+            <Ionicons name="close" size={18} color={timerDone ? colors.onPrimary : colors.textMuted} />
+          </GlassSurface>
         </Pressable>
       ) : null}
 
@@ -235,29 +239,31 @@ function CookMode({ recipe, servings }: { recipe: Recipe; servings: number }) {
 
       <View style={styles.footer}>
         {finished && saved !== null ? (
-          <Button
+          <GlassButton
             label="Terminer"
             icon="checkmark"
             size="lg"
+            variant="prominent"
             style={styles.flex}
             onPress={() => router.dismissTo('/(tabs)/recipes')}
           />
         ) : finished ? (
           <>
-            <Button label="Retour" icon="chevron-back" variant="secondary" size="lg" onPress={() => go(index - 1)} />
-            <Button label="J’ai cuisiné" icon="checkmark-done" size="lg" style={styles.flex} onPress={() => void finish()} />
+            <GlassButton label="Retour" icon="chevron-back" size="lg" onPress={() => go(index - 1)} />
+            <GlassButton
+              label="J’ai cuisiné"
+              icon="checkmark-done"
+              size="lg"
+              variant="prominent"
+              style={styles.flex}
+              onPress={() => void finish()}
+            />
           </>
         ) : (
           <>
-            <Button
-              label="Précédent"
-              icon="chevron-back"
-              variant="secondary"
-              size="lg"
-              disabled={index === -1}
-              onPress={() => go(index - 1)}
-            />
-            <Button
+            <GlassButton label="Précédent" icon="chevron-back" size="lg" disabled={index === -1} onPress={() => go(index - 1)} />
+            <GlassButton
+              variant="prominent"
               label={index === -1 ? 'C’est parti' : index === total - 1 ? 'Terminer' : 'Suivant'}
               icon="chevron-forward"
               size="lg"
@@ -272,7 +278,7 @@ function CookMode({ recipe, servings }: { recipe: Recipe; servings: number }) {
 }
 
 const useStyles = makeStyles(({ colors }) => ({
-  screen: { flex: 1, backgroundColor: colors.background },
+  screen: { flex: 1 },
   flex: { flex: 1 },
   header: { flexDirection: 'row', alignItems: 'center', gap: spacing.md, paddingHorizontal: spacing.lg, paddingTop: spacing.sm },
   eyebrow: {
@@ -284,7 +290,8 @@ const useStyles = makeStyles(({ colors }) => ({
   },
   recipeTitle: { fontSize: fontSize.title, fontWeight: '800', color: colors.text },
   progress: { flexDirection: 'row', gap: 4, paddingHorizontal: spacing.lg, marginTop: spacing.md },
-  progressBar: { flex: 1, height: 5, borderRadius: 3, backgroundColor: colors.surfaceMuted },
+  // Rail visible sur le fond d’ambiance (clair comme sombre) : teinte du texte très atténuée.
+  progressBar: { flex: 1, height: 5, borderRadius: 3, backgroundColor: withAlpha(colors.text, 0.12) },
   progressDone: { backgroundColor: colors.primary },
   timerBanner: {
     flexDirection: 'row',
@@ -293,10 +300,7 @@ const useStyles = makeStyles(({ colors }) => ({
     marginHorizontal: spacing.lg,
     marginTop: spacing.md,
     padding: spacing.md,
-    borderRadius: radius.lg,
-    backgroundColor: colors.primarySoft,
   },
-  timerBannerDone: { backgroundColor: colors.primary },
   timerText: { flex: 1, fontSize: fontSize.bodyLarge, fontWeight: '800', color: colors.text, fontVariant: ['tabular-nums'] },
   timerTextDone: { color: colors.onPrimary },
   body: { padding: spacing.xl, paddingBottom: spacing.xxl, width: '100%', maxWidth: 760, alignSelf: 'center', flexGrow: 1 },

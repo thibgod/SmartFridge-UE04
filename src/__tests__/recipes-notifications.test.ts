@@ -94,7 +94,9 @@ describe('planification des rappels', () => {
   it('regroupe les produits qui périment le même jour en un seul rappel', () => {
     const now = new Date(2026, 9, 14, 12);
     const plans = planReminders(
-      ['Yaourts', 'Lait', 'Crème', 'Jambon', 'Beurre'].map((name, i) => product({ id: String(i), name, expiresAt: '2026-10-20' })),
+      ['Yaourts', 'Lait', 'Crème', 'Jambon', 'Beurre'].map((name, i) =>
+        product({ id: String(i), name, expiresAt: '2026-10-20' }),
+      ),
       undefined,
       now,
     );

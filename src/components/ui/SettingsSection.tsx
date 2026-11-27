@@ -1,29 +1,43 @@
 import Ionicons from '@expo/vector-icons/Ionicons';
-import type { PropsWithChildren, ReactNode } from 'react';
+import { createContext, useContext, type PropsWithChildren, type ReactNode } from 'react';
 import { Pressable, StyleSheet, Switch, Text, View } from 'react-native';
 
-import { fontSize, makeStyles, MIN_TOUCH, radius, spacing, useTheme } from '@/theme';
+import { fontSize, makeStyles, MIN_TOUCH, radius, SETTINGS_TINTS, spacing, useTheme, type SettingsTint } from '@/theme';
 import type { IconName } from '@/types/content';
 
 interface SettingsSectionProps {
   title: string;
   icon: IconName;
   footer?: string;
+  /** Couleur de la rubrique (Réglages) : tuiles d’icônes pleines, comme dans les Réglages d’iOS. */
+  tint?: SettingsTint;
 }
 
+/** Couleur de la rubrique en cours, transmise aux lignes d’action qu’elle contient. */
+const SectionTintContext = createContext<string | null>(null);
+
 /** Carte de réglages : titre, contenu, note explicative facultative. */
-export function SettingsSection({ title, icon, footer, children }: PropsWithChildren<SettingsSectionProps>) {
+export function SettingsSection({ title, icon, footer, tint, children }: PropsWithChildren<SettingsSectionProps>) {
   const { colors } = useTheme();
   const styles = useStyles();
+  const tintColor = tint ? SETTINGS_TINTS[tint] : null;
   return (
     <View style={styles.section}>
       <View style={styles.header}>
-        <Ionicons name={icon} size={16} color={colors.primary} />
+        {tintColor ? (
+          <View style={[styles.headerTile, { backgroundColor: tintColor }]}>
+            <Ionicons name={icon} size={12} color={colors.onTint} />
+          </View>
+        ) : (
+          <Ionicons name={icon} size={16} color={colors.primary} />
+        )}
         <Text style={styles.title} accessibilityRole="header">
           {title}
         </Text>
       </View>
-      <View style={styles.card}>{children}</View>
+      <SectionTintContext.Provider value={tintColor}>
+        <View style={styles.card}>{children}</View>
+      </SectionTintContext.Provider>
       {footer ? <Text style={styles.footer}>{footer}</Text> : null}
     </View>
   );
@@ -78,7 +92,10 @@ interface SettingsActionProps {
 export function SettingsAction({ label, icon, onPress, tone = 'default', description, trailing }: SettingsActionProps) {
   const { colors } = useTheme();
   const styles = useStyles();
+  const sectionTint = useContext(SectionTintContext);
   const color = tone === 'danger' ? colors.danger : colors.primary;
+  // Dans une rubrique colorée : tuile pleine et pictogramme blanc ; sinon, tuile douce de l’accent.
+  const tileColor = tone === 'danger' ? SETTINGS_TINTS.red : sectionTint;
   return (
     <Pressable
       onPress={onPress}
@@ -87,8 +104,13 @@ export function SettingsAction({ label, icon, onPress, tone = 'default', descrip
       accessibilityHint={description}
       style={({ pressed }) => [styles.block, styles.action, pressed && styles.pressed]}
     >
-      <View style={[styles.actionIcon, { backgroundColor: tone === 'danger' ? colors.dangerSoft : colors.primarySoft }]}>
-        <Ionicons name={icon} size={19} color={color} />
+      <View
+        style={[
+          styles.actionIcon,
+          { backgroundColor: tileColor ?? (tone === 'danger' ? colors.dangerSoft : colors.primarySoft) },
+        ]}
+      >
+        <Ionicons name={icon} size={19} color={tileColor ? colors.onTint : color} />
       </View>
       <View style={styles.flex}>
         <Text style={[styles.actionLabel, tone === 'danger' && { color: colors.danger }]}>{label}</Text>
@@ -107,6 +129,7 @@ export function SettingsDivider() {
 const useStyles = makeStyles(({ colors, shadow }) => ({
   section: { marginBottom: spacing.xl },
   header: { flexDirection: 'row', alignItems: 'center', gap: spacing.xs + 2, marginBottom: spacing.sm, marginLeft: spacing.xs },
+  headerTile: { width: 20, height: 20, borderRadius: 6, alignItems: 'center', justifyContent: 'center' },
   title: { fontSize: fontSize.caption, fontWeight: '800', color: colors.primary, textTransform: 'uppercase', letterSpacing: 0.6 },
   card: {
     backgroundColor: colors.surface,
@@ -116,7 +139,13 @@ const useStyles = makeStyles(({ colors, shadow }) => ({
     borderColor: colors.border,
     ...shadow,
   },
-  footer: { fontSize: fontSize.caption, color: colors.textMuted, marginTop: spacing.sm, marginHorizontal: spacing.xs, lineHeight: 18 },
+  footer: {
+    fontSize: fontSize.caption,
+    color: colors.textMuted,
+    marginTop: spacing.sm,
+    marginHorizontal: spacing.xs,
+    lineHeight: 18,
+  },
   block: { padding: spacing.lg, minHeight: MIN_TOUCH },
   blockContent: { marginTop: spacing.md },
   switchRow: { flexDirection: 'row', alignItems: 'center', gap: spacing.md },

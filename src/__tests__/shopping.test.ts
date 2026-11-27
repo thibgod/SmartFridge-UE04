@@ -1,11 +1,5 @@
 import { RECIPES } from '@/data/recipes';
-import {
-  formatShoppingList,
-  groupShoppingItems,
-  missingIngredients,
-  prepareItems,
-  suggestRestock,
-} from '@/features/shopping/shoppingLogic';
+import { formatShoppingList, groupShoppingItems, missingIngredients, prepareItems } from '@/features/shopping/shoppingLogic';
 import { buildBackup, parseBackup } from '@/services/backup/format';
 import type { Product } from '@/types/product';
 import { DEFAULT_SETTINGS } from '@/types/settings';
@@ -53,28 +47,6 @@ describe('ajout à la liste de courses', () => {
   it('autorise à remettre un article déjà dans le panier', () => {
     const { items } = prepareItems([{ name: 'Lait' }], [item({ name: 'Lait', checked: true })], NOW);
     expect(items).toHaveLength(1);
-  });
-});
-
-describe('suggestions « à racheter »', () => {
-  const history = [
-    product({ id: '1', name: 'Yaourts nature', status: 'consumed', closedAt: '2026-10-01T08:00:00.000Z' }),
-    product({ id: '2', name: 'yaourts nature', status: 'consumed', closedAt: '2026-10-08T08:00:00.000Z' }),
-    product({ id: '3', name: 'Salade', status: 'discarded' }),
-    product({ id: '4', name: 'Salade', status: 'discarded' }),
-    product({ id: '5', name: 'Beurre', status: 'consumed' }),
-    product({ id: '6', name: 'Beurre', status: 'active', expiresAt: '2026-11-01' }),
-    product({ id: '7', name: 'Jambon', status: 'consumed' }),
-    product({ id: '8', name: 'Jambon', status: 'active', expiresAt: '2026-10-10' }),
-    product({ id: '9', name: 'Pommes', status: 'consumed' }),
-  ];
-
-  it('propose ce qui est souvent consommé et plus en stock, jamais ce qui est surtout jeté', () => {
-    expect(suggestRestock(history, [], NOW).map((s) => s.name)).toEqual(['Yaourts nature', 'Jambon']);
-  });
-
-  it('ne propose pas un article déjà sur la liste', () => {
-    expect(suggestRestock(history, [item({ name: 'jambon' })], NOW).map((s) => s.name)).toEqual(['Yaourts nature']);
   });
 });
 
@@ -149,12 +121,32 @@ describe('sauvegarde de la liste de courses', () => {
 describe('photos personnelles', () => {
   it('ne sont pas exportées dans la sauvegarde (elles restent sur le téléphone)', () => {
     const products = [
-      { id: 'a', name: 'Tomates', category: 'fruits_legumes', quantity: '1', expiresAt: '2026-10-20', location: 'frigo',
-        source: 'manual', status: 'active', addedAt: '2026-10-01T08:00:00.000Z', updatedAt: '2026-10-01T08:00:00.000Z',
-        imageUri: 'local:photos/abc.jpg' },
-      { id: 'b', name: 'Lait', category: 'produits_laitiers', quantity: '1', expiresAt: '2026-10-20', location: 'frigo',
-        source: 'open_food_facts', status: 'active', addedAt: '2026-10-01T08:00:00.000Z', updatedAt: '2026-10-01T08:00:00.000Z',
-        imageUri: 'https://images.openfoodfacts.org/lait.jpg' },
+      {
+        id: 'a',
+        name: 'Tomates',
+        category: 'fruits_legumes',
+        quantity: '1',
+        expiresAt: '2026-10-20',
+        location: 'frigo',
+        source: 'manual',
+        status: 'active',
+        addedAt: '2026-10-01T08:00:00.000Z',
+        updatedAt: '2026-10-01T08:00:00.000Z',
+        imageUri: 'local:photos/abc.jpg',
+      },
+      {
+        id: 'b',
+        name: 'Lait',
+        category: 'produits_laitiers',
+        quantity: '1',
+        expiresAt: '2026-10-20',
+        location: 'frigo',
+        source: 'open_food_facts',
+        status: 'active',
+        addedAt: '2026-10-01T08:00:00.000Z',
+        updatedAt: '2026-10-01T08:00:00.000Z',
+        imageUri: 'https://images.openfoodfacts.org/lait.jpg',
+      },
     ] as const;
     const file = buildBackup([...products], DEFAULT_SETTINGS, NOW);
     expect(file.products.map((p) => p.imageUri)).toEqual([undefined, 'https://images.openfoodfacts.org/lait.jpg']);

@@ -4,8 +4,7 @@ import { useState } from 'react';
 import { Linking, Platform, Pressable, ScrollView, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
-import { Button } from '@/components/ui/Button';
-import { IconButton } from '@/components/ui/IconButton';
+import { GlassButton, GlassSurface } from '@/components/glass';
 import { useToast } from '@/features/feedback/ToastProvider';
 import {
   asPremiumReason,
@@ -19,6 +18,7 @@ import { usePremium } from '@/features/premium/PremiumProvider';
 import { RECIPES } from '@/data/recipes';
 import { useModalTopInset } from '@/hooks/useModalTopInset';
 import { HEADING_FONT_SCALE, PRESSED, fontSize, makeStyles, radius, spacing, useTheme } from '@/theme';
+import { glassRadius } from '@/theme/liquidGlass';
 import type { IconName } from '@/types/content';
 import { haptics } from '@/utils/haptics';
 import { goBack } from '@/utils/navigation';
@@ -51,7 +51,7 @@ const BENEFITS: readonly Benefit[] = [
   { icon: 'restaurant-outline', title: `Les ${RECIPES.length} recettes`, detail: `Dont ${LOCKED_RECIPES} réservées à Premium` },
   { icon: 'receipt-outline', title: 'Tickets de caisse illimités', detail: `Au lieu de ${FREE_RECEIPTS_PER_MONTH} par mois` },
   { icon: 'apps-outline', title: 'Widget d’écran d’accueil', detail: 'Ce qui périme, sans ouvrir l’app' },
-  { icon: 'stats-chart-outline', title: 'Bilan complet', detail: 'Score, impact CO₂, graphiques, badges et historique' },
+  { icon: 'stats-chart-outline', title: 'Bilan complet', detail: 'Score, impact CO₂, graphiques et historique' },
   { icon: 'business-outline', title: 'Plusieurs frigos et lieux', detail: 'Bureau, résidence secondaire, cave…' },
   { icon: 'color-palette-outline', title: 'Couleurs et icônes au choix', detail: 'Océan, Framboise, Prune, Terracotta' },
   { icon: 'download-outline', title: 'Export du Bilan', detail: 'Rapport PDF ou tableau pour Excel, Numbers, Sheets' },
@@ -116,17 +116,18 @@ export default function PremiumScreen() {
   return (
     <View style={styles.screen}>
       <ScrollView contentContainerStyle={[styles.content, { paddingTop: topInset + spacing.md, paddingBottom: spacing.xl }]}>
-        <IconButton icon="close" label="Fermer" onPress={goBack} style={styles.close} />
+        <GlassButton icon="close" iconOnly label="Fermer" onPress={goBack} style={styles.close} />
 
-        <View style={styles.badge}>
+        {/* Pastille en verre teinté, comme une icône d’app posée sur le fond. */}
+        <GlassSurface prominent material="regular" radius={glassRadius.card} elevation="high" style={styles.badge}>
           <Ionicons name="sparkles" size={34} color={colors.onPrimary} />
-        </View>
+        </GlassSurface>
         <Text style={styles.title} accessibilityRole="header" maxFontSizeMultiplier={HEADING_FONT_SCALE}>
           SmartFridge Premium
         </Text>
         <Text style={styles.reason}>{isPremium ? 'Merci de soutenir SmartFridge !' : REASON_TEXT[reason]}</Text>
 
-        <View style={styles.benefits}>
+        <GlassSurface material="regular" radius={glassRadius.card} style={styles.benefits}>
           {BENEFITS.map((benefit) => (
             <View key={benefit.title} style={styles.benefit}>
               <View style={styles.benefitIcon}>
@@ -139,7 +140,7 @@ export default function PremiumScreen() {
               <Ionicons name="checkmark-circle" size={20} color={colors.success} />
             </View>
           ))}
-        </View>
+        </GlassSurface>
 
         {isPremium ? (
           <View style={styles.active}>
@@ -163,30 +164,36 @@ export default function PremiumScreen() {
                   accessibilityRole="radio"
                   accessibilityState={{ checked: isSelected }}
                   accessibilityLabel={`${definition.title}, ${o.price} ${definition.period}${o.hasFreeTrial ? `, essai gratuit de ${TRIAL_DAYS} jours` : ''}`}
-                  style={[styles.plan, isSelected && styles.planSelected]}
                 >
-                  <Ionicons
-                    name={isSelected ? 'radio-button-on' : 'radio-button-off'}
-                    size={22}
-                    color={isSelected ? colors.primary : colors.textSubtle}
-                  />
-                  <View style={styles.flex}>
-                    <View style={styles.planTitleRow}>
-                      <Text style={styles.planTitle}>{definition.title}</Text>
-                      {o.id === 'yearly' ? (
-                        <View style={styles.bestValue}>
-                          <Text style={styles.bestValueText}>Le plus avantageux</Text>
-                        </View>
-                      ) : null}
+                  {/* Carte de verre ; la formule choisie est entourée de la couleur d’accent. */}
+                  <GlassSurface
+                    material="regular"
+                    radius={glassRadius.control}
+                    style={[styles.plan, isSelected && styles.planSelected]}
+                  >
+                    <Ionicons
+                      name={isSelected ? 'radio-button-on' : 'radio-button-off'}
+                      size={22}
+                      color={isSelected ? colors.primary : colors.textSubtle}
+                    />
+                    <View style={styles.flex}>
+                      <View style={styles.planTitleRow}>
+                        <Text style={styles.planTitle}>{definition.title}</Text>
+                        {o.id === 'yearly' ? (
+                          <View style={styles.bestValue}>
+                            <Text style={styles.bestValueText}>Le plus avantageux</Text>
+                          </View>
+                        ) : null}
+                      </View>
+                      <Text style={styles.planDetail}>
+                        {o.id === 'yearly' ? `Soit ${o.monthlyEquivalent ?? '1,25 € par mois'}` : 'Sans engagement'}
+                      </Text>
                     </View>
-                    <Text style={styles.planDetail}>
-                      {o.id === 'yearly' ? `Soit ${o.monthlyEquivalent ?? '1,25 € par mois'}` : 'Sans engagement'}
-                    </Text>
-                  </View>
-                  <View style={styles.planPrice}>
-                    <Text style={styles.price}>{o.price}</Text>
-                    <Text style={styles.period}>{definition.period}</Text>
-                  </View>
+                    <View style={styles.planPrice}>
+                      <Text style={styles.price}>{o.price}</Text>
+                      <Text style={styles.period}>{definition.period}</Text>
+                    </View>
+                  </GlassSurface>
                 </Pressable>
               );
             })}
@@ -207,19 +214,14 @@ export default function PremiumScreen() {
 
       <View style={[styles.footer, { paddingBottom: insets.bottom + spacing.md }]}>
         {isPremium ? (
-          <Button
-            label="Gérer mon abonnement"
-            icon="settings-outline"
-            size="lg"
-            variant="secondary"
-            onPress={() => void manage()}
-          />
+          <GlassButton label="Gérer mon abonnement" icon="settings-outline" size="lg" onPress={() => void manage()} />
         ) : (
           <>
-            <Button
+            <GlassButton
               label={ctaLabel}
               icon="sparkles-outline"
               size="lg"
+              variant="prominent"
               loading={purchasing !== null}
               disabled={!canBuy}
               onPress={() => void subscribe()}
@@ -265,7 +267,7 @@ export default function PremiumScreen() {
 }
 
 const useStyles = makeStyles(({ colors }) => ({
-  screen: { flex: 1, backgroundColor: colors.background },
+  screen: { flex: 1 },
   flex: { flex: 1 },
   content: { paddingHorizontal: spacing.lg, gap: spacing.md, width: '100%', maxWidth: 640, alignSelf: 'center' },
   close: { alignSelf: 'flex-end' },
@@ -273,10 +275,8 @@ const useStyles = makeStyles(({ colors }) => ({
     alignSelf: 'center',
     width: 76,
     height: 76,
-    borderRadius: radius.xl,
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: colors.primary,
   },
   title: { fontSize: fontSize.heading, fontWeight: '800', color: colors.text, textAlign: 'center', letterSpacing: -0.4 },
   reason: { fontSize: fontSize.bodyLarge, lineHeight: 23, color: colors.textMuted, textAlign: 'center' },
@@ -284,10 +284,6 @@ const useStyles = makeStyles(({ colors }) => ({
     marginTop: spacing.sm,
     padding: spacing.md,
     gap: spacing.md,
-    borderRadius: radius.lg,
-    backgroundColor: colors.surface,
-    borderWidth: 1,
-    borderColor: colors.border,
   },
   benefit: { flexDirection: 'row', alignItems: 'center', gap: spacing.md },
   benefitIcon: {
@@ -306,12 +302,10 @@ const useStyles = makeStyles(({ colors }) => ({
     alignItems: 'center',
     gap: spacing.md,
     padding: spacing.md,
-    borderRadius: radius.lg,
     borderWidth: 2,
-    borderColor: colors.border,
-    backgroundColor: colors.surface,
+    borderColor: 'transparent',
   },
-  planSelected: { borderColor: colors.primary, backgroundColor: colors.primarySoft },
+  planSelected: { borderColor: colors.primary },
   planTitleRow: { flexDirection: 'row', alignItems: 'center', flexWrap: 'wrap', gap: spacing.sm },
   planTitle: { fontSize: fontSize.bodyLarge, fontWeight: '800', color: colors.text },
   bestValue: { paddingHorizontal: spacing.sm, paddingVertical: 2, borderRadius: radius.pill, backgroundColor: colors.primary },
@@ -333,10 +327,7 @@ const useStyles = makeStyles(({ colors }) => ({
   footer: {
     gap: spacing.sm,
     paddingHorizontal: spacing.lg,
-    paddingTop: spacing.md,
-    borderTopWidth: 1,
-    borderTopColor: colors.border,
-    backgroundColor: colors.background,
+    paddingTop: spacing.sm,
     width: '100%',
     maxWidth: 640,
     alignSelf: 'center',

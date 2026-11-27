@@ -79,13 +79,13 @@ export async function exportHistoryCsv(products: readonly Product[]): Promise<vo
 const REPORT_MARGINS = { top: 40, right: 40, bottom: 40, left: 40 };
 
 /** Bilan en PDF (Premium) : généré sur le téléphone au format A4, puis partagé. */
-export async function exportReportPdf(products: readonly Product[]): Promise<void> {
+export async function exportReportPdf(products: readonly Product[], urgentThreshold?: number): Promise<void> {
   if (!(await Sharing.isAvailableAsync())) {
     throw new BackupError('Le partage de fichiers n’est pas disponible sur cet appareil.');
   }
   // A4 à 72 points par pouce : 595 × 842.
   const { uri } = await Print.printToFileAsync({
-    html: buildReportHtml(products),
+    html: buildReportHtml(products, new Date(), urgentThreshold),
     width: 595,
     height: 842,
     margins: REPORT_MARGINS,

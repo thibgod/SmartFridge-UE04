@@ -21,12 +21,12 @@ import { BarcodeLookup } from './form/BarcodeLookup';
 import { CategoryGrid } from './form/CategoryGrid';
 import { DateField, type DateSuggestion } from './form/DateField';
 import { Field, TextField, useFieldStyles } from './form/FormField';
+import { ServingsStepper } from './recipes/ServingsStepper';
 import { QuickAdd } from './form/QuickAdd';
 import { FoodImage } from './FoodImage';
-import { Button } from './ui/Button';
 import { Chip } from './ui/Chip';
 import { KeyboardSafeView } from './ui/KeyboardSafeView';
-import { SegmentedControl } from './ui/SegmentedControl';
+import { GlassButton, GlassSegmentedControl } from './glass';
 
 interface ProductFormProps {
   form: ProductFormController;
@@ -51,6 +51,8 @@ interface ProductFormProps {
   nameHint?: string | null;
   /** Actions supplémentaires (ex. suppression) affichées sous le formulaire. */
   footer?: ReactNode;
+  /** Plusieurs lots identiques d’un coup (ajout uniquement) : 4 beurres, chacun sur sa ligne. */
+  lots?: { value: number; max: number; onChange: (value: number) => void; note?: string | null };
 }
 
 export const LOCATION_PHRASE: Record<ProductLocation, string> = {
@@ -92,6 +94,7 @@ export function ProductForm({
   nameNotice,
   nameHint,
   footer,
+  lots,
 }: ProductFormProps) {
   const { colors } = useTheme();
   const styles = useStyles();
@@ -142,7 +145,14 @@ export function ProductForm({
 
   return (
     <KeyboardSafeView style={styles.flex}>
-      <ScrollView ref={scrollRef} style={styles.flex} contentContainerStyle={styles.content} keyboardShouldPersistTaps="handled">
+      <ScrollView
+        ref={scrollRef}
+        style={styles.flex}
+        contentContainerStyle={styles.content}
+        keyboardShouldPersistTaps="handled"
+        // Sous la barre de titre transparente : iOS décale le contenu de la bonne hauteur.
+        contentInsetAdjustmentBehavior="automatic"
+      >
         {showQuickAdd ? <QuickAdd items={frequent} onPick={pickFrequent} /> : null}
 
         <BarcodeLookup
@@ -234,7 +244,7 @@ export function ProductForm({
         </Field>
 
         <Field label="Emplacement" required>
-          <SegmentedControl
+          <GlassSegmentedControl
             segments={LOCATION_ORDER.map((location) => ({
               value: location,
               label: LOCATIONS[location].label,
@@ -294,6 +304,24 @@ export function ProductForm({
           </View>
         </View>
 
+        {lots ? (
+          <Field label="Nombre de lots">
+            <View style={styles.lotsRow}>
+              <ServingsStepper
+                value={lots.value}
+                min={1}
+                max={lots.max}
+                unit={['lot', 'lots']}
+                icon="layers-outline"
+                onChange={lots.onChange}
+              />
+              <Text style={styles.lotsHint}>
+                {lots.note ?? 'Ex. 4 beurres : chacun se consomme à part, réunis sur une ligne à l’accueil.'}
+              </Text>
+            </View>
+          </Field>
+        ) : null}
+
         {notesOpen ? (
           <TextField
             label="Notes"
@@ -325,7 +353,15 @@ export function ProductForm({
             <Text style={styles.errorText}>{bannerMessage}</Text>
           </View>
         ) : null}
-        <Button label={submitLabel} onPress={handleSubmit} loading={submitting} size="lg" icon="checkmark" />
+        {/* Bouton principal en verre teinté, posé sur le fond : plus de bandeau opaque en bas du formulaire. */}
+        <GlassButton
+          label={submitLabel}
+          onPress={handleSubmit}
+          loading={submitting}
+          size="lg"
+          icon="checkmark"
+          variant="prominent"
+        />
       </View>
     </KeyboardSafeView>
   );
@@ -334,6 +370,8 @@ export function ProductForm({
 const useStyles = makeStyles(({ colors }) => ({
   flex: { flex: 1 },
   places: { flexDirection: 'row', flexWrap: 'wrap', gap: spacing.sm },
+  lotsRow: { flexDirection: 'row', alignItems: 'center', gap: spacing.md },
+  lotsHint: { flex: 1, fontSize: fontSize.caption, color: colors.textMuted, lineHeight: 17 },
   content: { padding: spacing.lg, paddingBottom: spacing.xxl, width: '100%', maxWidth: 680, alignSelf: 'center' },
   receiptLink: {
     flexDirection: 'row',
@@ -401,11 +439,8 @@ const useStyles = makeStyles(({ colors }) => ({
   footer: { marginTop: spacing.xl, gap: spacing.sm },
   bottomBar: {
     paddingHorizontal: spacing.lg,
-    paddingTop: spacing.md,
+    paddingTop: spacing.sm,
     gap: spacing.sm,
-    backgroundColor: colors.background,
-    borderTopWidth: 1,
-    borderTopColor: colors.border,
   },
   errorBanner: {
     flexDirection: 'row',

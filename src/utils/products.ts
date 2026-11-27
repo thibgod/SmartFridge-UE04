@@ -67,6 +67,67 @@ export function groupByUrgency(
   return SECTION_ORDER.filter((level) => buckets[level].length > 0).map((level) => ({ level, data: buckets[level] }));
 }
 
+/**
+ * Plusieurs lots du même produit au même endroit (trois packs de yaourts, deux bouteilles de lait) :
+ * une seule ligne à l’accueil. `lots` est trié par date, le premier est le plus pressé.
+ */
+export interface ProductGroup {
+  key: string;
+  lots: Product[];
+}
+
+/** Regroupe une liste déjà triée par date ; l’ordre des groupes suit leur lot le plus pressé. */
+export function groupLots(sorted: readonly Product[]): ProductGroup[] {
+  const groups = new Map<string, ProductGroup>();
+  for (const product of sorted) {
+    const key = `${product.location}:${normalizeText(product.name)}`;
+    const group = groups.get(key);
+    if (group) group.lots.push(product);
+    else groups.set(key, { key, lots: [product] });
+  }
+  return [...groups.values()];
+}
+
+/**
+ * Lots identiques d’un groupe (achetés le même jour, même date, même reste) réunis pour l’affichage :
+ * « 4 × 1 l, ajoutés le 21 nov. » plutôt que quatre lignes pareilles.
+ */
+export function bundleLots(lots: readonly Product[]): Product[][] {
+  const bundles = new Map<string, Product[]>();
+  for (const lot of lots) {
+    const key = [
+      lot.expiresAt,
+      toLocalDateString(new Date(lot.addedAt)),
+      lot.quantity,
+      lot.remaining ?? '',
+      lot.openedAt ? 'o' : '',
+    ].join('|');
+    const bundle = bundles.get(key);
+    if (bundle) bundle.push(lot);
+    else bundles.set(key, [lot]);
+  }
+  return [...bundles.values()];
+}
+
+export interface GroupedSection {
+  level: ExpiryLevel;
+  groups: ProductGroup[];
+}
+
+/** Sections Périmés / À consommer vite / Plus tard, par groupe : un groupe va où est son lot le plus pressé. */
+export function groupSections(
+  sorted: readonly Product[],
+  now: Date = new Date(),
+  threshold: number = DEFAULT_URGENT_THRESHOLD,
+): GroupedSection[] {
+  const buckets: Record<ExpiryLevel, ProductGroup[]> = { expired: [], urgent: [], ok: [] };
+  for (const group of groupLots(sorted)) {
+    const first = group.lots[0];
+    if (first) buckets[getExpiryLevel(daysUntil(first.expiresAt, now), threshold)].push(group);
+  }
+  return SECTION_ORDER.filter((level) => buckets[level].length > 0).map((level) => ({ level, groups: buckets[level] }));
+}
+
 export interface FrequentProduct {
   /** Dernière occurrence, utilisée pour préremplir le formulaire. */
   latest: Product;

@@ -1,28 +1,32 @@
 import Ionicons from '@expo/vector-icons/Ionicons';
 import { router } from 'expo-router';
 import { useCallback, useMemo, useState } from 'react';
-import { Alert, FlatList, Text, View } from 'react-native';
+import { Alert, Text, View } from 'react-native';
+import Animated from 'react-native-reanimated';
 
 import { BadgesCard } from '@/components/charts/BadgesCard';
 import { CategoryWasteList } from '@/components/charts/CategoryWasteList';
 import { ImpactCard } from '@/components/charts/ImpactCard';
 import { KpiCard, type KpiDelta } from '@/components/charts/KpiCard';
 import { MonthlyChart } from '@/components/charts/MonthlyChart';
+import { SavingsCard } from '@/components/charts/SavingsCard';
 import { ScoreCard } from '@/components/charts/ScoreCard';
 import { EmptyState } from '@/components/EmptyState';
 import { HistoryItem } from '@/components/HistoryItem';
 import { Button } from '@/components/ui/Button';
 import { Chip } from '@/components/ui/Chip';
-import { Screen, ScreenHeader, SectionTitle } from '@/components/ui/Screen';
-import { SegmentedControl } from '@/components/ui/SegmentedControl';
+import { GlassHeader, GlassSegmentedControl, useGlassScroll } from '@/components/glass';
+import { ScreenHeader, SectionTitle } from '@/components/ui/Screen';
 import { CATEGORIES } from '@/constants/catalog';
 import { WASTE_ADVICE } from '@/data/wasteAdvice';
 import { computeAchievements } from '@/features/achievements/achievements';
 import { useToast } from '@/features/feedback/ToastProvider';
+import { isStatsFeatureLocked } from '@/features/premium/limits';
 import { usePremium } from '@/features/premium/PremiumProvider';
 import { exportHistoryCsv, exportReportPdf } from '@/services/backup/files';
 import { useProducts } from '@/features/products/ProductsProvider';
 import { useRecipeLog } from '@/features/recipes/RecipeLogProvider';
+import { useSettings } from '@/features/settings/SettingsProvider';
 import { useLayout } from '@/hooks/useLayout';
 import { useToday } from '@/hooks/useToday';
 import { fontSize, makeStyles, radius, spacing, useTheme } from '@/theme';
@@ -34,6 +38,7 @@ import { pluralize } from '@/utils/text';
 import {
   antiWasteScore,
   comparePeriods,
+  compareToAverage,
   filterClosedByPeriod,
   monthlyAmounts,
   monthlyBreakdown,
@@ -53,10 +58,12 @@ export default function StatsScreen() {
   const { colors } = useTheme();
   const styles = useStyles();
   const { gutter } = useLayout();
+  const { ref: scrollRef, scrollY, contentInsets, indicatorInsets } = useGlassScroll<Animated.FlatList<Product>>(spacing.xxl * 2);
   const { products, deleteProduct } = useProducts();
   const { showToast } = useToast();
   const { history: cookedHistory } = useRecipeLog();
   const today = useToday();
+  const threshold = useSettings().settings.urgentThresholdDays;
   const [chosenPeriod, setPeriod] = useState<StatsPeriod>('30d');
   const { isPremium, showPaywall } = usePremium();
   const [exporting, setExporting] = useState(false);
@@ -65,7 +72,7 @@ export default function StatsScreen() {
   const runExport = async (format: 'pdf' | 'csv') => {
     setExporting(true);
     try {
-      await (format === 'pdf' ? exportReportPdf(products) : exportHistoryCsv(products));
+      await (format === 'pdf' ? exportReportPdf(products, threshold) : exportHistoryCsv(products));
     } catch (error) {
       showToast({ tone: 'error', message: error instanceof Error && error.message ? error.message : 'L’export a échoué.' });
     } finally {
@@ -94,7 +101,7 @@ export default function StatsScreen() {
     const now = parseLocalDate(today);
     now.setHours(23, 59, 59);
     const inPeriod = filterClosedByPeriod(products, period, now);
-    const { current, previous } = comparePeriods(products, period, now);
+    const { current, previous } = comparePeriods(products, period, now, threshold);
     const repeated = repeatedlyDiscarded(inPeriod);
     const categories = wasteByCategory(inPeriod);
     return {
@@ -102,16 +109,17 @@ export default function StatsScreen() {
       current,
       previous,
       score: antiWasteScore(current),
+      comparison: compareToAverage(current),
       previousScore: previous ? antiWasteScore(previous) : null,
       history: selectHistory(inPeriod),
       categories,
       repeated,
       months: monthlyBreakdown(products, 6, now),
       amounts: monthlyAmounts(products, 6, now),
-      impact: computeImpact(inPeriod),
-      achievements: computeAchievements(products, cookedHistory, now),
+      impact: computeImpact(inPeriod, threshold),
+      achievements: computeAchievements(products, cookedHistory, now, threshold),
     };
-  }, [products, period, today, cookedHistory]);
+  }, [products, period, today, cookedHistory, threshold]);
 
   const delta = (current: number, previous: number | undefined, format: (v: number) => string, goodWhen: KpiDelta['goodWhen']) =>
     previous === undefined ? null : { value: current - previous, label: signed(current - previous, format), goodWhen };
@@ -149,8 +157,8 @@ export default function StatsScreen() {
       <ScreenHeader title="Bilan" subtitle="Votre impact anti-gaspi, en un coup d’œil." />
       {data.hasAnyHistory ? (
         <View style={styles.block}>
-          {isPremium ? (
-            <SegmentedControl
+          {!isStatsFeatureLocked('periods', isPremium) ? (
+            <GlassSegmentedControl
               segments={[
                 { value: '30d', label: '30 jours' },
                 { value: '6m', label: '6 mois' },
@@ -166,7 +174,7 @@ export default function StatsScreen() {
 
           {current.closedCount > 0 && data.score !== null ? (
             <>
-              {isPremium ? (
+              {!isStatsFeatureLocked('score', isPremium) ? (
                 <ScoreCard
                   score={data.score}
                   previous={data.previousScore}
@@ -177,11 +185,11 @@ export default function StatsScreen() {
               <View style={styles.grid}>
                 <KpiCard
                   label="Économisés"
-                  value={formatCents(current.savedCents)}
+                  value={`≈ ${formatCents(current.avoidedCents)}`}
                   icon="wallet-outline"
                   accent={{ fg: colors.success, bg: colors.successSoft }}
-                  delta={delta(current.savedCents, previous?.savedCents, formatCents, 'up')}
-                  caption={pluralize(current.consumedCount, 'produit consommé', 'produits consommés')}
+                  delta={delta(current.avoidedCents, previous?.avoidedCents, formatCents, 'up')}
+                  caption="par rapport à un foyer moyen"
                 />
                 <KpiCard
                   label="Perdus"
@@ -198,6 +206,7 @@ export default function StatsScreen() {
                   {current.unpricedCount > 1 ? 'ne sont pas comptés' : 'n’est pas compté'} dans les montants.
                 </Text>
               ) : null}
+              {data.comparison ? <SavingsCard comparison={data.comparison} stats={current} urgentThreshold={threshold} /> : null}
             </>
           ) : (
             <View style={styles.periodEmpty}>
@@ -207,7 +216,7 @@ export default function StatsScreen() {
 
           {!isPremium ? <PremiumStatsTeaser onPress={() => showPaywall('stats')} /> : null}
 
-          {isPremium && data.impact.savedKg > 0 ? <ImpactCard impact={data.impact} /> : null}
+          {!isStatsFeatureLocked('impact', isPremium) && data.impact.savedKg > 0 ? <ImpactCard impact={data.impact} /> : null}
 
           {insight ? (
             <View style={styles.insight}>
@@ -221,11 +230,12 @@ export default function StatsScreen() {
             </View>
           ) : null}
 
-          {isPremium ? (
-            <>
-              <SectionTitle title="Vos badges" caption="Depuis le début, toutes périodes confondues." />
-              <BadgesCard achievements={data.achievements} />
+          {/* Médailles offertes à tous : elles encouragent à ne rien jeter (voir PREMIUM.md). */}
+          <SectionTitle title="Vos badges" caption="Depuis le début, toutes périodes confondues." />
+          <BadgesCard achievements={data.achievements} />
 
+          {!isStatsFeatureLocked('charts', isPremium) ? (
+            <>
               <MonthlyChart months={data.months} amounts={data.amounts} />
               <CategoryWasteList items={data.categories} />
             </>
@@ -271,8 +281,9 @@ export default function StatsScreen() {
   );
 
   return (
-    <Screen>
-      <FlatList<Product>
+    <View style={styles.screen}>
+      <Animated.FlatList
+        ref={scrollRef}
         data={history.slice(0, limit)}
         keyExtractor={(item) => item.id}
         renderItem={({ item, index }) => (
@@ -306,14 +317,16 @@ export default function StatsScreen() {
             />
           )
         }
-        contentContainerStyle={[styles.list, { paddingHorizontal: gutter }]}
+        contentContainerStyle={[contentInsets, { paddingHorizontal: gutter }]}
+        scrollIndicatorInsets={indicatorInsets}
       />
-    </Screen>
+      <GlassHeader title="Bilan" scrollY={scrollY} threshold={24} />
+    </View>
   );
 }
 
 const useStyles = makeStyles(({ colors }) => ({
-  list: { paddingBottom: spacing.xxl * 2 },
+  screen: { flex: 1 },
   block: { gap: spacing.md, marginTop: spacing.sm },
   teaser: {
     gap: spacing.sm + 2,
@@ -367,7 +380,6 @@ const TEASER_ITEMS: readonly {
   { icon: 'trophy-outline', text: 'Score anti-gaspi et son évolution' },
   { icon: 'leaf-outline', text: 'Nourriture sauvée et CO₂ évité' },
   { icon: 'bar-chart-outline', text: 'Graphiques par mois et par catégorie' },
-  { icon: 'ribbon-outline', text: 'Badges à débloquer' },
   { icon: 'time-outline', text: 'Bilans sur 6 mois et depuis le début' },
 ];
 

@@ -47,50 +47,6 @@ export function prepareItems(
   return { items, duplicates };
 }
 
-export interface RestockSuggestion {
-  name: string;
-  category: ProductCategory;
-  /** Nombre de fois où le produit a été consommé. */
-  consumedCount: number;
-}
-
-/**
- * Produits à racheter : déjà achetés au moins deux fois, plus en stock (ou périmés),
- * absents de la liste. Un produit plus souvent jeté que consommé n’est pas proposé :
- * l’app ne pousse pas à racheter ce qui finit à la poubelle.
- */
-export function suggestRestock(
-  products: readonly Product[],
-  items: readonly ShoppingItem[],
-  now: Date = new Date(),
-  limit = 8,
-): RestockSuggestion[] {
-  const onList = new Set(items.map((item) => itemKey(item.name)));
-  const groups = new Map<
-    string,
-    { latest: Product; total: number; consumed: number; discarded: number; inStock: boolean; lastClosed: string }
-  >();
-
-  for (const product of products) {
-    const key = itemKey(product.name);
-    if (!key) continue;
-    const group = groups.get(key) ?? { latest: product, total: 0, consumed: 0, discarded: 0, inStock: false, lastClosed: '' };
-    group.total += 1;
-    if (product.addedAt > group.latest.addedAt) group.latest = product;
-    if (product.status === 'consumed') group.consumed += 1;
-    if (product.status === 'discarded') group.discarded += 1;
-    if (product.status === 'active' && daysUntil(product.expiresAt, now) >= 0) group.inStock = true;
-    if (product.closedAt && product.closedAt > group.lastClosed) group.lastClosed = product.closedAt;
-    groups.set(key, group);
-  }
-
-  return [...groups.entries()]
-    .filter(([key, g]) => g.total >= 2 && g.consumed >= 1 && g.consumed >= g.discarded && !g.inStock && !onList.has(key))
-    .sort(([, a], [, b]) => b.consumed - a.consumed || b.lastClosed.localeCompare(a.lastClosed))
-    .slice(0, limit)
-    .map(([, g]) => ({ name: g.latest.name, category: g.latest.category, consumedCount: g.consumed }));
-}
-
 export interface MissingIngredient {
   name: string;
   /** Quantité pour le nombre de personnes choisi (« 200 g », « 3 »), vide si libre. */
@@ -133,9 +89,7 @@ export function groupShoppingItems(items: readonly ShoppingItem[]): { sections: 
     category,
     data: pending.filter((item) => item.category === category).sort((a, b) => a.name.localeCompare(b.name, 'fr')),
   })).filter((section) => section.data.length > 0);
-  const checked = items
-    .filter((item) => item.checked)
-    .sort((a, b) => (b.checkedAt ?? '').localeCompare(a.checkedAt ?? ''));
+  const checked = items.filter((item) => item.checked).sort((a, b) => (b.checkedAt ?? '').localeCompare(a.checkedAt ?? ''));
   return { sections, checked };
 }
 

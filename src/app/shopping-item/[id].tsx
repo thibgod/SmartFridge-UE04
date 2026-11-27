@@ -7,6 +7,7 @@ import { EmptyState } from '@/components/EmptyState';
 import { CategoryGrid } from '@/components/form/CategoryGrid';
 import { Field, TextField } from '@/components/form/FormField';
 import { Button } from '@/components/ui/Button';
+import { GlassButton } from '@/components/glass';
 import { KeyboardSafeView } from '@/components/ui/KeyboardSafeView';
 import { useToast } from '@/features/feedback/ToastProvider';
 import { SHOPPING_NAME_MAX_LENGTH } from '@/features/shopping/shoppingLogic';
@@ -64,7 +65,11 @@ function ShoppingItemForm({ item }: { item: ShoppingItem }) {
 
   return (
     <KeyboardSafeView style={styles.flex}>
-      <ScrollView contentContainerStyle={styles.content} keyboardShouldPersistTaps="handled">
+      <ScrollView
+        contentInsetAdjustmentBehavior="automatic"
+        contentContainerStyle={styles.content}
+        keyboardShouldPersistTaps="handled"
+      >
         <TextField
           label="Article"
           required
@@ -94,14 +99,14 @@ function ShoppingItemForm({ item }: { item: ShoppingItem }) {
         <Button label="Retirer de la liste" icon="trash-outline" variant="ghost" onPress={remove} />
       </ScrollView>
       <View style={[styles.footer, { paddingBottom: insets.bottom + spacing.md }]}>
-        <Button label="Enregistrer" icon="checkmark" size="lg" onPress={() => void save()} />
+        <GlassButton label="Enregistrer" icon="checkmark" size="lg" variant="prominent" onPress={() => void save()} />
       </View>
     </KeyboardSafeView>
   );
 }
 
 const useStyles = makeStyles(({ colors }) => ({
-  flex: { flex: 1, backgroundColor: colors.background },
+  flex: { flex: 1 },
   content: { padding: spacing.lg, gap: spacing.lg, width: '100%', maxWidth: 680, alignSelf: 'center' },
-  footer: { paddingHorizontal: spacing.lg, paddingTop: spacing.md, borderTopWidth: 1, borderTopColor: colors.border },
+  footer: { paddingHorizontal: spacing.lg, paddingTop: spacing.sm },
 }));

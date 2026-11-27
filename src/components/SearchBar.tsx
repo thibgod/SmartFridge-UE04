@@ -1,8 +1,10 @@
 import Ionicons from '@expo/vector-icons/Ionicons';
-import { Pressable, TextInput, View } from 'react-native';
+import { Pressable, TextInput } from 'react-native';
 import Animated, { FadeIn, FadeOut } from 'react-native-reanimated';
 
-import { MIN_TOUCH, PRESSED, fontSize, makeStyles, radius, spacing, useTheme } from '@/theme';
+import { GlassSurface } from '@/components/glass';
+import { MIN_TOUCH, PRESSED, fontSize, makeStyles, spacing, useTheme } from '@/theme';
+import { glassRadius } from '@/theme/liquidGlass';
 
 interface SearchBarProps {
   value: string;
@@ -14,7 +16,8 @@ export function SearchBar({ value, onChangeText, placeholder = 'Rechercher un pr
   const { colors } = useTheme();
   const styles = useStyles();
   return (
-    <View style={styles.container}>
+    // Capsule de verre, comme les champs de recherche d’iOS 26 : c’est une commande posée sur le contenu.
+    <GlassSurface material="regular" radius={glassRadius.pill} elevation="none" style={styles.container}>
       <Ionicons name="search" size={19} color={colors.textMuted} />
       <TextInput
         value={value}
@@ -42,7 +45,7 @@ export function SearchBar({ value, onChangeText, placeholder = 'Rechercher un pr
           </Pressable>
         </Animated.View>
       ) : null}
-    </View>
+    </GlassSurface>
   );
 }
 
@@ -52,9 +55,7 @@ const useStyles = makeStyles(({ colors }) => ({
     alignItems: 'center',
     gap: spacing.sm,
     minHeight: MIN_TOUCH,
-    paddingHorizontal: spacing.md,
-    backgroundColor: colors.surfaceMuted,
-    borderRadius: radius.md,
+    paddingHorizontal: spacing.md + 2,
   },
   input: { flex: 1, fontSize: fontSize.body, color: colors.text, paddingVertical: spacing.sm },
 }));

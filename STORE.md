@@ -134,6 +134,10 @@ faites avec des données de démonstration (aucune donnée personnelle), barre d
 vérifiez dans App Store Connect la taille exacte demandée pour l’iPhone Duo et ajoutez-en d’autres au besoin
 depuis Device Hub (Xcode 27.1).
 
+**iPad** : l’app est proposée sur iPad (`supportsTablet` dans `app.json`). App Store Connect exige alors des
+captures **iPad 13 pouces** (2064 × 2752 en portrait ou 2752 × 2064 en paysage) : elles ne sont **pas encore
+faites**. À l’horizontale, l’accueil s’affiche en deux colonnes : une capture en paysage le met en valeur.
+
 ## Avant d’envoyer une version aux stores
 
 1. `npx tsc --noEmit`, `npx expo lint`, `npx jest`, `npx expo-doctor` : tout doit passer.

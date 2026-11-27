@@ -7,6 +7,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { EmptyState } from '@/components/EmptyState';
 import { FoodImage } from '@/components/FoodImage';
 import { Button } from '@/components/ui/Button';
+import { GlassButton } from '@/components/glass';
 import { LOCATIONS } from '@/constants/catalog';
 import { useToast } from '@/features/feedback/ToastProvider';
 import { FREE_RECEIPTS_PER_MONTH, remainingProductSlots } from '@/features/premium/limits';
@@ -73,7 +74,10 @@ export default function ReceiptScreen() {
 
   if (receiptsLeft === 0 && phase.status !== 'reading') {
     return (
-      <ScrollView contentContainerStyle={[styles.intro, { paddingBottom: insets.bottom + spacing.xl }]}>
+      <ScrollView
+        contentInsetAdjustmentBehavior="automatic"
+        contentContainerStyle={[styles.intro, { paddingBottom: insets.bottom + spacing.xl }]}
+      >
         <EmptyState
           icon="receipt-outline"
           title={`${FREE_RECEIPTS_PER_MONTH} tickets lus ce mois-ci`}
@@ -95,7 +99,10 @@ export default function ReceiptScreen() {
   }
 
   return (
-    <ScrollView contentContainerStyle={[styles.intro, { paddingBottom: insets.bottom + spacing.xl }]}>
+    <ScrollView
+      contentInsetAdjustmentBehavior="automatic"
+      contentContainerStyle={[styles.intro, { paddingBottom: insets.bottom + spacing.xl }]}
+    >
       {phase.status === 'reading' ? (
         <View style={styles.reading} accessibilityLiveRegion="polite">
           <ActivityIndicator size="large" />
@@ -124,8 +131,14 @@ export default function ReceiptScreen() {
 
       {phase.status !== 'reading' ? (
         <View style={styles.actions}>
-          <Button label="Photographier le ticket" icon="camera" size="lg" onPress={() => void read('camera')} />
-          <Button label="Choisir une photo" icon="images-outline" variant="secondary" onPress={() => void read('library')} />
+          <GlassButton
+            label="Photographier le ticket"
+            icon="camera"
+            size="lg"
+            variant="prominent"
+            onPress={() => void read('camera')}
+          />
+          <GlassButton label="Choisir une photo" icon="images-outline" onPress={() => void read('library')} />
           {!isPremium ? (
             <Text style={styles.quota}>
               {receiptsLeft === 1
@@ -203,7 +216,12 @@ function ReceiptReview({ initial, onRetry }: { initial: ReceiptCandidate[]; onRe
 
   return (
     <View style={styles.flex}>
-      <ScrollView contentContainerStyle={styles.review} keyboardShouldPersistTaps="handled" automaticallyAdjustKeyboardInsets>
+      <ScrollView
+        contentInsetAdjustmentBehavior="automatic"
+        contentContainerStyle={styles.review}
+        keyboardShouldPersistTaps="handled"
+        automaticallyAdjustKeyboardInsets
+      >
         <Text style={styles.reviewTitle}>{pluralize(candidates.length, 'ligne lue', 'lignes lues')}</Text>
         <Text style={styles.reviewHint}>
           Cochez ce qui se range chez vous et corrigez les noms si besoin. Touchez l’emplacement pour le changer. Les dates sont
@@ -249,7 +267,8 @@ function ReceiptReview({ initial, onRetry }: { initial: ReceiptCandidate[]; onRe
             </Text>
           </Pressable>
         ) : null}
-        <Button
+        <GlassButton
+          variant="prominent"
           label={selected.length > 0 ? `Ajouter ${pluralize(selected.length, 'produit')}` : 'Cochez au moins un produit'}
           icon="checkmark"
           size="lg"
@@ -325,12 +344,11 @@ function CandidateRow({ candidate, first, expiresAt, onToggle, onRename, onCycle
 }
 
 const useStyles = makeStyles(({ colors }) => ({
-  flex: { flex: 1, backgroundColor: colors.background },
+  flex: { flex: 1 },
   intro: {
     flexGrow: 1,
     padding: spacing.lg,
     gap: spacing.lg,
-    backgroundColor: colors.background,
     maxWidth: 560,
     width: '100%',
     alignSelf: 'center',
@@ -395,11 +413,8 @@ const useStyles = makeStyles(({ colors }) => ({
   retry: { marginTop: spacing.md },
   footer: {
     paddingHorizontal: spacing.lg,
-    paddingTop: spacing.md,
+    paddingTop: spacing.sm,
     gap: spacing.xs,
-    borderTopWidth: 1,
-    borderTopColor: colors.border,
-    backgroundColor: colors.background,
   },
   saveError: { fontSize: fontSize.caption + 1, color: colors.danger, textAlign: 'center' },
   limit: {

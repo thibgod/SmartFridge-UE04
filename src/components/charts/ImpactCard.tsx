@@ -5,7 +5,7 @@ import { fontSize, makeStyles, radius, spacing, useTheme } from '@/theme';
 import type { IconName } from '@/types/content';
 import { formatKg, type ImpactSummary } from '@/utils/impact';
 
-/** Impact concret des produits sauvés : nourriture, CO₂ et équivalent voiture (estimations). */
+/** Impact concret des produits sauvés de justesse : nourriture, CO₂ et équivalent voiture (estimations). */
 export function ImpactCard({ impact }: { impact: ImpactSummary }) {
   const { colors } = useTheme();
   const styles = useStyles();
@@ -17,11 +17,14 @@ export function ImpactCard({ impact }: { impact: ImpactSummary }) {
         <Text style={styles.title}>Votre impact</Text>
       </View>
       <View style={styles.row}>
-        <Item icon="basket-outline" value={formatKg(impact.savedKg)} label="de nourriture sauvée" />
+        <Item icon="basket-outline" value={formatKg(impact.savedKg)} label="de nourriture sauvée de justesse" />
         <Item icon="cloud-outline" value={formatKg(impact.co2Kg)} label="de CO₂ évités" />
         <Item icon="car-outline" value={`${km} km`} label="en voiture, en équivalent" />
       </View>
-      <Text style={styles.note}>Estimations d’après les quantités saisies et des moyennes par catégorie (ADEME).</Text>
+      <Text style={styles.note}>
+        Produits mangés près de leur date (ou après). Estimations d’après les quantités saisies et des moyennes par catégorie
+        (ADEME).
+      </Text>
     </View>
   );
 }

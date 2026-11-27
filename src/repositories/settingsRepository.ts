@@ -1,9 +1,11 @@
 import type { SQLiteDatabase } from 'expo-sqlite';
 
 import { isAccentId } from '@/theme/accents';
+import { isMascotId } from '@/features/mascot/mascots';
 
 import {
   DEFAULT_SETTINGS,
+  HOUSEHOLD_LIMITS,
   REMINDER_DAYS_OPTIONS,
   THEME_OPTIONS,
   URGENT_THRESHOLD_OPTIONS,
@@ -32,17 +34,30 @@ export function sanitizeSettings(raw: Partial<Record<keyof AppSettings, unknown>
       ? (raw.themePreference as AppSettings['themePreference'])
       : DEFAULT_SETTINGS.themePreference,
     accent: isAccentId(raw.accent) ? raw.accent : DEFAULT_SETTINGS.accent,
+    mascot: isMascotId(raw.mascot) ? raw.mascot : DEFAULT_SETTINGS.mascot,
     autoImages: typeof raw.autoImages === 'boolean' ? raw.autoImages : DEFAULT_SETTINGS.autoImages,
     receiptUsage: sanitizeReceiptUsage(raw.receiptUsage),
     premiumCached: raw.premiumCached === true,
     autoBackup: typeof raw.autoBackup === 'boolean' ? raw.autoBackup : DEFAULT_SETTINGS.autoBackup,
     currentPlaceId:
-      typeof raw.currentPlaceId === 'string' && raw.currentPlaceId.length > 0 ? raw.currentPlaceId : DEFAULT_SETTINGS.currentPlaceId,
+      typeof raw.currentPlaceId === 'string' && raw.currentPlaceId.length > 0
+        ? raw.currentPlaceId
+        : DEFAULT_SETTINGS.currentPlaceId,
     lastAutoBackupAt:
       typeof raw.lastAutoBackupAt === 'string' && !Number.isNaN(Date.parse(raw.lastAutoBackupAt)) ? raw.lastAutoBackupAt : null,
     seenBadges:
       Array.isArray(raw.seenBadges) && raw.seenBadges.every((id) => typeof id === 'string') ? (raw.seenBadges as string[]) : null,
+    household: sanitizeHousehold(raw.household),
   };
+}
+
+function sanitizeHousehold(raw: unknown): AppSettings['household'] {
+  if (typeof raw !== 'object' || raw === null) return null;
+  const { adults, children } = raw as Record<string, unknown>;
+  const valid = (value: unknown, { min, max }: { min: number; max: number }) =>
+    typeof value === 'number' && Number.isInteger(value) && value >= min && value <= max;
+  if (!valid(adults, HOUSEHOLD_LIMITS.adults) || !valid(children, HOUSEHOLD_LIMITS.children)) return null;
+  return { adults: adults as number, children: children as number };
 }
 
 function sanitizeReceiptUsage(raw: unknown): AppSettings['receiptUsage'] {

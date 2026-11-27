@@ -5,6 +5,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { TextField } from '@/components/form/FormField';
 import { Button } from '@/components/ui/Button';
+import { GlassButton } from '@/components/glass';
 import { KeyboardSafeView } from '@/components/ui/KeyboardSafeView';
 import { useToast } from '@/features/feedback/ToastProvider';
 import {
@@ -70,7 +71,10 @@ export default function PlacesScreen() {
   };
 
   return (
-    <ScrollView contentContainerStyle={[styles.content, { paddingBottom: insets.bottom + spacing.xxl }]}>
+    <ScrollView
+      contentInsetAdjustmentBehavior="automatic"
+      contentContainerStyle={[styles.content, { paddingBottom: insets.bottom + spacing.xxl }]}
+    >
       <Text style={styles.intro}>
         Un frigo au bureau, une résidence secondaire, une cave ? Chaque lieu a son frigo, son congélateur et son placard.
       </Text>
@@ -181,7 +185,11 @@ function PlaceEditor({ editing, onDone }: { editing: NonNullable<Editing>; onDon
 
   return (
     <KeyboardSafeView style={styles.flex}>
-      <ScrollView contentContainerStyle={styles.content} keyboardShouldPersistTaps="handled">
+      <ScrollView
+        contentInsetAdjustmentBehavior="automatic"
+        contentContainerStyle={styles.content}
+        keyboardShouldPersistTaps="handled"
+      >
         <TextField
           label="Nom du lieu"
           required
@@ -221,8 +229,9 @@ function PlaceEditor({ editing, onDone }: { editing: NonNullable<Editing>; onDon
         </View>
       </ScrollView>
       <View style={[styles.footer, { paddingBottom: insets.bottom + spacing.md }]}>
-        <Button label="Annuler" variant="secondary" size="lg" style={styles.flex} onPress={onDone} />
-        <Button
+        <GlassButton label="Annuler" size="lg" style={styles.flex} onPress={onDone} />
+        <GlassButton
+          variant="prominent"
           label={initial ? 'Enregistrer' : 'Créer le lieu'}
           icon="checkmark"
           size="lg"
@@ -286,8 +295,6 @@ const useStyles = makeStyles(({ colors }) => ({
     flexDirection: 'row',
     gap: spacing.md,
     paddingHorizontal: spacing.lg,
-    paddingTop: spacing.md,
-    borderTopWidth: 1,
-    borderTopColor: colors.border,
+    paddingTop: spacing.sm,
   },
 }));

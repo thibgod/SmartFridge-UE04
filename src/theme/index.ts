@@ -6,8 +6,11 @@ export {
   HEADING_FONT_SCALE,
   PRESSED,
   MIN_TOUCH,
+  TABLET_CONTENT_MAX_WIDTH,
   fontSize,
   radius,
   spacing,
   type Palette,
+  SETTINGS_TINTS,
+  type SettingsTint,
 } from './tokens';

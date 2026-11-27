@@ -18,6 +18,8 @@ export interface Palette {
   primaryPressed: string;
   primarySoft: string;
   onPrimary: string;
+  /** Pictogramme posé sur une tuile de couleur pleine (Réglages) : blanc dans les deux modes. */
+  onTint: string;
   danger: string;
   dangerSoft: string;
   warning: string;
@@ -52,6 +54,7 @@ export const lightPalette: Palette = {
   primaryPressed: '#245540',
   primarySoft: '#E2EEE6',
   onPrimary: '#FFFFFF',
+  onTint: '#FFFFFF',
   danger: '#B3261E',
   dangerSoft: '#FBE6E3',
   warning: '#9C4A00',
@@ -84,6 +87,7 @@ export const darkPalette: Palette = {
   primaryPressed: '#5FB58C',
   primarySoft: '#1C3529',
   onPrimary: '#0A1D13',
+  onTint: '#FFFFFF',
   danger: '#FF9A8F',
   dangerSoft: '#3A1E1B',
   warning: '#FFBE75',
@@ -153,16 +157,38 @@ export const MIN_TOUCH = 44;
 /** Largeur de lecture maximale sur tablette / grand écran. */
 export const CONTENT_MAX_WIDTH = 760;
 
-export function elevation(isDark: boolean, level: 1 | 2 = 1): ViewStyle {
+/** Largeur maximale des grilles et du mode deux colonnes sur tablette. */
+export const TABLET_CONTENT_MAX_WIDTH = 1100;
+
+export function elevation(isDark: boolean, level: 1 | 2 = 1, tint = '#3B3220'): ViewStyle {
   // En mode sombre, les ombres sont invisibles : la hiérarchie passe par la surface plus claire.
   if (isDark) return {};
+  // En clair, ombre teintée par la couleur d’accent : les cartes « flottent » sur le fond coloré au lieu
+  // d’y poser une tache grise.
   return Platform.select<ViewStyle>({
     ios: {
-      shadowColor: '#3B3220',
-      shadowOpacity: level === 1 ? 0.07 : 0.14,
-      shadowRadius: level === 1 ? 10 : 18,
-      shadowOffset: { width: 0, height: level === 1 ? 3 : 8 },
+      shadowColor: tint,
+      shadowOpacity: level === 1 ? 0.1 : 0.18,
+      shadowRadius: level === 1 ? 14 : 24,
+      shadowOffset: { width: 0, height: level === 1 ? 4 : 10 },
     },
     default: { elevation: level === 1 ? 2 : 6 },
   });
 }
+
+/**
+ * Couleurs des rubriques des Réglages, à la manière d’iOS : une icône blanche sur une tuile de couleur
+ * par rubrique. Teintes assez soutenues pour que le pictogramme blanc reste net (≥ 3:1, testé).
+ */
+export const SETTINGS_TINTS = {
+  violet: '#7A4FD0',
+  pink: '#D13D78',
+  red: '#D7373F',
+  blue: '#2A6FDB',
+  teal: '#0F8A8A',
+  gray: '#6B7280',
+  orange: '#C2610C',
+  green: '#2F7A55',
+} as const;
+
+export type SettingsTint = keyof typeof SETTINGS_TINTS;

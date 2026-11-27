@@ -3,6 +3,9 @@
 Décisions prises le 21 octobre 2026. Elles remplacent l’ancienne règle « pas d’abonnement » du projet ;
 le reste tient toujours : pas de compte, pas de serveur SmartFridge, pas de mesure d’audience.
 
+Mise à jour du 24 novembre 2026 : les médailles (badges) du Bilan passent dans la version gratuite
+(règle : `isStatsFeatureLocked` dans `src/features/premium/limits.ts`, testée).
+
 ## Offre
 
 | | |
@@ -22,7 +25,7 @@ le reste tient toujours : pas de compte, pas de serveur SmartFridge, pas de mesu
 | Recettes | 15 sur 38 (les autres visibles avec un cadenas) | Toutes |
 | Lecture du ticket de caisse | 3 tickets par mois | Illimité |
 | Widget d’écran d’accueil | — | Oui |
-| Bilan | Économisé / perdu sur 30 jours | Score, impact CO₂, graphiques, badges, périodes 6 mois / tout, export |
+| Bilan | Économisé / perdu sur 30 jours, médailles (badges) | Score, impact CO₂, graphiques, périodes 6 mois / tout, export |
 
 ## Nouveautés Premium
 

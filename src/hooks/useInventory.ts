@@ -5,7 +5,7 @@ import { useSettings } from '@/features/settings/SettingsProvider';
 import type { LocationFilter, Product } from '@/types/product';
 import { daysUntil, parseLocalDate } from '@/utils/date';
 import { getExpiryInfo, getExpiryLevel, type ExpiryLevel } from '@/utils/expiry';
-import { filterByUrgency, groupByUrgency, selectInventory, sortByExpiry, type UrgencyFilter } from '@/utils/products';
+import { filterByUrgency, groupSections, selectInventory, sortByExpiry, type UrgencyFilter } from '@/utils/products';
 
 import { useToday } from './useToday';
 
@@ -63,7 +63,8 @@ export function useInventory() {
       locationCounts,
       priority,
       headline: buildHeadline(counts, priority, activeProducts.length, now),
-      sections: groupByUrgency(visible, now, threshold),
+      // Lots du même produit au même endroit réunis sur une ligne.
+      sections: groupSections(visible, now, threshold),
       visibleCount: visible.length,
     };
   }, [activeProducts, today, threshold, filter, deferredQuery, urgency]);

@@ -1,11 +1,22 @@
 import Ionicons from '@expo/vector-icons/Ionicons';
 import { router } from 'expo-router';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { ActivityIndicator, Pressable, Text, View, type NativeScrollEvent, type NativeSyntheticEvent } from 'react-native';
+import {
+  ActivityIndicator,
+  Pressable,
+  ScrollView,
+  Text,
+  View,
+  type NativeScrollEvent,
+  type NativeSyntheticEvent,
+} from 'react-native';
 import Animated, { LinearTransition } from 'react-native-reanimated';
 
 import { EmptyState } from '@/components/EmptyState';
 import { PeekingFridgeMascot } from '@/components/FridgeMascot';
+import { mostPressing } from '@/features/mascot/mascotLines';
+import { GlassButton, GlassHeader, GlassHeaderSpacer, GlassSegmentedControl, useGlassScroll } from '@/components/glass';
+import { LotRow } from '@/components/home/LotRow';
 import { ProductRow } from '@/components/home/ProductRow';
 import { SwipeHint } from '@/components/home/SwipeHint';
 import { TonightCard } from '@/components/home/TonightCard';
@@ -13,9 +24,8 @@ import { UrgencySummary } from '@/components/home/UrgencySummary';
 import { SearchBar } from '@/components/SearchBar';
 import { Button } from '@/components/ui/Button';
 import { Fab } from '@/components/ui/Fab';
-import { IconButton } from '@/components/ui/IconButton';
-import { Screen, ScreenHeader } from '@/components/ui/Screen';
-import { SegmentedControl, type Segment } from '@/components/ui/SegmentedControl';
+import { ScreenHeader } from '@/components/ui/Screen';
+import type { Segment } from '@/components/ui/SegmentedControl';
 import { LOCATION_ORDER, LOCATIONS } from '@/constants/catalog';
 import { expiryColors } from '@/components/ExpiryBadge';
 import { MAIN_PLACE } from '@/features/places/places';
@@ -27,8 +37,11 @@ import { useInventory } from '@/hooks/useInventory';
 import { useLayout } from '@/hooks/useLayout';
 import { CHROME_FONT_SCALE, PRESSED, fontSize, makeStyles, spacing, useTheme, radius } from '@/theme';
 import type { ClosedProductStatus, LocationFilter, Product } from '@/types/product';
-import { daysUntil, formatLongDateCapitalized } from '@/utils/date';
+import { haptics } from '@/utils/haptics';
+import { bundleLots, type ProductGroup } from '@/utils/products';
+import { formatLongDateCapitalized, parseLocalDate } from '@/utils/date';
 import type { ExpiryLevel } from '@/utils/expiry';
+import { SIDE_PANE_WIDTH } from '@/utils/layout';
 
 const SECTION_TITLES: Record<ExpiryLevel, string> = {
   expired: 'Périmés',
@@ -44,14 +57,20 @@ const SEARCH_MIN_PRODUCTS = 6;
  * (une ligne consommée s’efface et les suivantes remontent) avec `itemLayoutAnimation`.
  */
 type FridgeRow =
-  { kind: 'header'; key: string; level: ExpiryLevel; count: number } | { kind: 'product'; key: string; product: Product };
+  | { kind: 'header'; key: string; level: ExpiryLevel; count: number }
+  | { kind: 'product'; key: string; group: ProductGroup; expanded: boolean }
+  | { kind: 'lot'; key: string; product: Product; count: number };
 
 const ROW_TRANSITION = LinearTransition.duration(260);
 
 export default function FridgeScreen() {
   const { colors } = useTheme();
   const styles = useStyles();
-  const { gutter } = useLayout();
+  // Tablette à l’horizontale : résumé et filtres à gauche, liste des produits à droite.
+  const { gutter, wideGutter, twoPane } = useLayout();
+  // Défilement lu sur le fil d’interface : l’en-tête en verre apparaît et la barre du bas se réduit sans
+  // repasser par React à chaque image. 120 pt de plus en bas : la place du bouton « Ajouter ».
+  const { ref: scrollRef, scrollY, contentInsets, indicatorInsets } = useGlassScroll<Animated.FlatList<FridgeRow>>(120);
   const { isLoading, loadError, reload } = useProducts();
   const { settings, updateSettings } = useSettings();
   const { close } = useProductActions();
@@ -67,6 +86,18 @@ export default function FridgeScreen() {
 
   const openProduct = useCallback((product: Product) => {
     router.push({ pathname: '/product/[id]', params: { id: product.id } });
+  }, []);
+
+  // Produits regroupés (plusieurs lots) : toucher la ligne affiche ou masque ses lots.
+  const [expandedGroups, setExpandedGroups] = useState<ReadonlySet<string>>(() => new Set());
+  const toggleGroup = useCallback((key: string) => {
+    haptics.select();
+    setExpandedGroups((current) => {
+      const next = new Set(current);
+      if (next.has(key)) next.delete(key);
+      else next.add(key);
+      return next;
+    });
   }, []);
 
   // Nombre de lignes ouvertes par un balayage : le bouton « + » se retire pour ne pas couvrir « Jeté ».
@@ -93,27 +124,49 @@ export default function FridgeScreen() {
 
   const rows = useMemo<FridgeRow[]>(
     () =>
-      inventory.sections.flatMap((section) => [
-        { kind: 'header' as const, key: `section-${section.level}`, level: section.level, count: section.data.length },
-        ...section.data.map((product) => ({ kind: 'product' as const, key: product.id, product })),
+      inventory.sections.flatMap((section): FridgeRow[] => [
+        { kind: 'header', key: `section-${section.level}`, level: section.level, count: section.groups.length },
+        ...section.groups.flatMap((group): FridgeRow[] => {
+          const expanded = group.lots.length > 1 && expandedGroups.has(group.key);
+          return [
+            { kind: 'product', key: group.key, group, expanded },
+            ...(expanded
+              ? bundleLots(group.lots).map((bundle): FridgeRow => ({
+                  kind: 'lot',
+                  key: `lot-${bundle[0]?.id}`,
+                  product: bundle[0] as Product,
+                  count: bundle.length,
+                }))
+              : []),
+          ];
+        }),
       ]),
-    [inventory.sections],
+    [inventory.sections, expandedGroups],
   );
   const demoId = showSwipeHint && !inventory.isFiltered ? rows.find((row) => row.kind === 'product')?.key : undefined;
 
   const renderItem = useCallback(
     ({ item }: { item: FridgeRow }) => {
       if (item.kind === 'product') {
+        const [first] = item.group.lots;
+        if (!first) return null;
+        const grouped = item.group.lots.length > 1;
         return (
           <ProductRow
-            product={item.product}
+            product={first}
             urgentThreshold={inventory.threshold}
-            onPress={openProduct}
+            onPress={grouped ? () => toggleGroup(item.group.key) : openProduct}
             onClose={onCloseProduct}
             onSwipeChange={onSwipeChange}
             demo={item.key === demoId}
+            lotCount={item.group.lots.length}
+            lastExpiresAt={item.group.lots.at(-1)?.expiresAt}
+            expanded={item.expanded}
           />
         );
+      }
+      if (item.kind === 'lot') {
+        return <LotRow product={item.product} count={item.count} urgentThreshold={inventory.threshold} onPress={openProduct} />;
       }
       const tone = expiryColors(colors, item.level);
       return (
@@ -128,7 +181,7 @@ export default function FridgeScreen() {
         </View>
       );
     },
-    [inventory.threshold, openProduct, onCloseProduct, onSwipeChange, demoId, colors, styles],
+    [inventory.threshold, openProduct, toggleGroup, onCloseProduct, onSwipeChange, demoId, colors, styles],
   );
 
   const locationSegments: Segment<LocationFilter>[] = [
@@ -143,19 +196,25 @@ export default function FridgeScreen() {
 
   const hasProducts = inventory.totalCount > 0;
   // Ce que la mascotte peut dire : les compteurs et le produit le plus pressé.
-  const soonest = inventory.priority[0];
+  // Le plus pressé, périmé compris : « à consommer vite » ne contient pas les produits déjà périmés.
+  // Recalculé aussi au changement de jour : « périme demain » devient « périme aujourd’hui ».
+  const soonest = useMemo(
+    () => mostPressing(inventory.placeProducts, parseLocalDate(inventory.today)),
+    [inventory.placeProducts, inventory.today],
+  );
   const mascotFridge = useMemo(
     () => ({
       total: inventory.totalCount,
       urgent: inventory.counts.urgent,
       expired: inventory.counts.expired,
-      soonest: soonest ? { name: soonest.name, daysLeft: daysUntil(soonest.expiresAt) } : undefined,
+      soonest,
     }),
     [inventory.totalCount, inventory.counts.urgent, inventory.counts.expired, soonest],
   );
   // Sélecteur de lieu : seulement quand il y a plusieurs lieux, l’accueil reste sinon inchangé.
   const { places, current } = usePlaces();
   const hasPlaces = places.length > 0;
+  const title = hasPlaces && current.id !== MAIN_PLACE.id ? current.name : 'Mon frigo';
   const showPriority = inventory.priority.length > 0 && !inventory.isFiltered;
   const showSearch = inventory.totalCount >= SEARCH_MIN_PRODUCTS || inventory.query !== '';
 
@@ -163,14 +222,9 @@ export default function FridgeScreen() {
     <View>
       <ScreenHeader
         eyebrow={formatLongDateCapitalized(inventory.today).replace(/ \d{4}$/, '')}
-        title={hasPlaces && current.id !== MAIN_PLACE.id ? current.name : 'Mon frigo'}
+        title={title}
         subtitle={inventory.headline}
-        right={
-          <>
-            <IconButton icon="barcode-outline" label="Scanner un code-barres" onPress={() => router.push('/scan')} />
-            <IconButton icon="settings-outline" label="Réglages" onPress={() => router.push('/settings')} />
-          </>
-        }
+        right={<GlassHeaderSpacer count={2} />}
       />
 
       {hasPlaces ? (
@@ -207,7 +261,7 @@ export default function FridgeScreen() {
       {hasProducts ? (
         <View style={[styles.block, styles.filters]}>
           {showSearch ? <SearchBar value={inventory.query} onChangeText={inventory.setQuery} /> : null}
-          <SegmentedControl segments={locationSegments} value={inventory.filter} onChange={inventory.setFilter} />
+          <GlassSegmentedControl segments={locationSegments} value={inventory.filter} onChange={inventory.setFilter} />
           {showSwipeHint && !inventory.isFiltered ? <SwipeHint onDismiss={dismissSwipeHint} /> : null}
           {inventory.isFiltered ? (
             <View style={styles.filterInfo}>
@@ -270,34 +324,79 @@ export default function FridgeScreen() {
     />
   );
 
+  const list = (
+    <Animated.FlatList
+      ref={scrollRef}
+      data={rows}
+      keyExtractor={(item) => item.key}
+      renderItem={renderItem}
+      itemLayoutAnimation={ROW_TRANSITION}
+      skipEnteringExitingAnimations
+      extraData={`${inventory.today}-${inventory.threshold}`}
+      ListHeaderComponent={twoPane ? undefined : header}
+      ListEmptyComponent={empty}
+      style={twoPane ? styles.mainPane : undefined}
+      contentContainerStyle={[contentInsets, !twoPane && { paddingHorizontal: gutter }]}
+      scrollIndicatorInsets={indicatorInsets}
+      onScroll={onScroll}
+      scrollEventThrottle={32}
+      keyboardShouldPersistTaps="handled"
+      keyboardDismissMode="on-drag"
+    />
+  );
+
   return (
-    <Screen>
-      <Animated.FlatList
-        data={rows}
-        keyExtractor={(item) => item.key}
-        renderItem={renderItem}
-        itemLayoutAnimation={ROW_TRANSITION}
-        skipEnteringExitingAnimations
-        extraData={`${inventory.today}-${inventory.threshold}`}
-        ListHeaderComponent={header}
-        ListEmptyComponent={empty}
-        contentContainerStyle={[styles.list, { paddingHorizontal: gutter }]}
-        onScroll={onScroll}
-        scrollEventThrottle={32}
-        keyboardShouldPersistTaps="handled"
-        keyboardDismissMode="on-drag"
+    <View style={styles.screen}>
+      {twoPane ? (
+        <View style={[styles.panes, { paddingHorizontal: wideGutter }]}>
+          <ScrollView
+            style={styles.sidePane}
+            contentContainerStyle={[styles.sideContent, contentInsets]}
+            keyboardShouldPersistTaps="handled"
+            keyboardDismissMode="on-drag"
+          >
+            {header}
+          </ScrollView>
+          {list}
+        </View>
+      ) : (
+        list
+      )}
+      {/* Barre du haut : boutons toujours à portée, titre compact et verre dès que la liste passe dessous. */}
+      <GlassHeader
+        title={title}
+        scrollY={scrollY}
+        threshold={32}
+        wide={twoPane}
+        right={
+          <>
+            <GlassButton icon="barcode-outline" iconOnly label="Scanner un code-barres" onPress={() => router.push('/scan')} />
+            <GlassButton icon="settings-outline" iconOnly label="Réglages" onPress={() => router.push('/settings')} />
+          </>
+        }
       />
-      <PeekingFridgeMascot fridge={mascotFridge} ready={!isLoading} scrolled={!atTop} rowOpen={openRows > 0} />
+      <PeekingFridgeMascot fridge={mascotFridge} ready={!isLoading} scrolled={!atTop} rowOpen={openRows > 0} wide={twoPane} />
       {hasProducts ? (
         // Se retire en fondu pendant un balayage pour ne pas couvrir le panneau « Jeté ».
-        <Fab label="Ajouter" icon="add" extended={atTop} visible={openRows === 0} onPress={() => router.push('/product/new')} />
+        <Fab
+          label="Ajouter"
+          icon="add"
+          extended={atTop}
+          visible={openRows === 0}
+          wide={twoPane}
+          onPress={() => router.push('/product/new')}
+        />
       ) : null}
-    </Screen>
+    </View>
   );
 }
 
 const useStyles = makeStyles(({ colors }) => ({
-  list: { paddingBottom: 120 },
+  screen: { flex: 1 },
+  panes: { flex: 1, flexDirection: 'row', gap: spacing.xl },
+  sidePane: { width: SIDE_PANE_WIDTH, flexGrow: 0 },
+  sideContent: { paddingBottom: spacing.xxl * 2 },
+  mainPane: { flex: 1 },
   tonight: { marginTop: spacing.md },
   placePill: {
     flexDirection: 'row',

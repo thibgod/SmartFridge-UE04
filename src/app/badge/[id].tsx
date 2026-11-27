@@ -8,16 +8,25 @@ import Animated, {
   useDerivedValue,
   useReducedMotion,
   useSharedValue,
+  type SharedValue,
   withSpring,
   withTiming,
 } from 'react-native-reanimated';
 import { scheduleOnRN } from 'react-native-worklets';
 
 import { EmptyState } from '@/components/EmptyState';
-import { Medal } from '@/components/badges/Medal';
+import { Medal, MedalEdge } from '@/components/badges/Medal';
 import { Button } from '@/components/ui/Button';
 import { computeAchievements } from '@/features/achievements/achievements';
-import { flipAngle, medalOf, restingAngle, seenAfterOpening, TIER_LABEL } from '@/features/achievements/medals';
+import {
+  flipAngle,
+  medalOf,
+  restingAngle,
+  seenAfterOpening,
+  TIER_LABEL,
+  type MedalShape,
+  type MedalTier,
+} from '@/features/achievements/medals';
 import { useProducts } from '@/features/products/ProductsProvider';
 import { useRecipeLog } from '@/features/recipes/RecipeLogProvider';
 import { useSettings } from '@/features/settings/SettingsProvider';
@@ -26,6 +35,9 @@ import { haptics } from '@/utils/haptics';
 import { goBack } from '@/utils/navigation';
 
 const MEDAL_SIZE = 230;
+/** Épaisseur de la médaille (pt) et nombre de tranches empilées pour la dessiner de profil. */
+const MEDAL_THICKNESS = 18;
+const EDGE_SLICES = 12;
 const EASE_OUT = Easing.bezier(0.23, 1, 0.32, 1);
 
 /** Fiche d'une médaille : on la fait tourner au doigt, et elle arrive en tournant quand elle vient d'être gagnée. */
@@ -37,7 +49,11 @@ export default function BadgeScreen() {
   const styles = useStyles();
   const reduced = useReducedMotion();
 
-  const badge = useMemo(() => computeAchievements(products, history).badges.find((b) => b.id === id), [products, history, id]);
+  const threshold = settings.urgentThresholdDays;
+  const badge = useMemo(
+    () => computeAchievements(products, history, new Date(), threshold).badges.find((b) => b.id === id),
+    [products, history, id, threshold],
+  );
   // Décidé une fois à l'ouverture : la fête ne rejoue pas quand le badge passe en « vu ».
   const [celebrate] = useState(
     () => badge?.achieved === true && settings.seenBadges !== null && !settings.seenBadges.includes(badge.id),
@@ -109,12 +125,20 @@ export default function BadgeScreen() {
     );
   };
 
-  const front = useAnimatedStyle(() => ({
-    transform: [{ perspective: 900 }, { rotateY: `${rotation.get()}deg` }, { scale: scale.get() }],
-  }));
-  const backFace = useAnimatedStyle(() => ({
-    transform: [{ perspective: 900 }, { rotateY: `${rotation.get() + 180}deg` }, { scale: scale.get() }],
-  }));
+  // Face posée sur le dessus de l’épaisseur, revers en dessous : de profil, on voit la tranche entre les deux.
+  // Un point à la profondeur d se projette à d × sin(angle) : chaque couche se décale d’autant.
+  const front = useAnimatedStyle(() => {
+    const shift = (MEDAL_THICKNESS / 2) * Math.sin((rotation.get() * Math.PI) / 180);
+    return {
+      transform: [{ perspective: 900 }, { translateX: shift }, { rotateY: `${rotation.get()}deg` }, { scale: scale.get() }],
+    };
+  });
+  const backFace = useAnimatedStyle(() => {
+    const shift = -(MEDAL_THICKNESS / 2) * Math.sin((rotation.get() * Math.PI) / 180);
+    return {
+      transform: [{ perspective: 900 }, { translateX: shift }, { rotateY: `${rotation.get() + 180}deg` }, { scale: scale.get() }],
+    };
+  });
 
   if (!badge) {
     return (
@@ -141,16 +165,18 @@ export default function BadgeScreen() {
           accessibilityActions={badge.achieved ? [{ name: 'activate', label: 'Retourner la médaille' }] : undefined}
           onAccessibilityAction={flipForAccessibility}
         >
-          <Animated.View style={[styles.face, front]}>
-            <Medal
-              {...medal}
-              icon={badge.icon}
-              achieved={badge.achieved}
-              size={MEDAL_SIZE}
-              progress={ratio}
-              sheen={badge.achieved ? sheen : undefined}
-            />
-          </Animated.View>
+          {badge.achieved
+            ? Array.from({ length: EDGE_SLICES }, (_, i) => (
+                <EdgeSlice
+                  key={i}
+                  depth={MEDAL_THICKNESS * (i / (EDGE_SLICES - 1) - 0.5)}
+                  rotation={rotation}
+                  scale={scale}
+                  tier={medal.tier}
+                  shape={medal.shape}
+                />
+              ))
+            : null}
           {badge.achieved ? (
             <Animated.View style={[styles.face, styles.back, backFace]} pointerEvents="none">
               <Medal {...medal} icon={badge.icon} achieved size={MEDAL_SIZE} back />
@@ -163,6 +189,16 @@ export default function BadgeScreen() {
               </View>
             </Animated.View>
           ) : null}
+          <Animated.View style={[styles.face, front]}>
+            <Medal
+              {...medal}
+              icon={badge.icon}
+              achieved={badge.achieved}
+              size={MEDAL_SIZE}
+              progress={ratio}
+              sheen={badge.achieved ? sheen : undefined}
+            />
+          </Animated.View>
         </View>
       </GestureDetector>
 
@@ -194,6 +230,34 @@ export default function BadgeScreen() {
   );
 }
 
+/** Une tranche de la médaille, à la profondeur `depth` (pt) : elle suit la rotation comme la face. */
+function EdgeSlice({
+  depth,
+  rotation,
+  scale,
+  tier,
+  shape,
+}: {
+  depth: number;
+  rotation: SharedValue<number>;
+  scale: SharedValue<number>;
+  tier: MedalTier;
+  shape: MedalShape;
+}) {
+  const styles = useStyles();
+  const style = useAnimatedStyle(() => {
+    const shift = depth * Math.sin((rotation.get() * Math.PI) / 180);
+    return {
+      transform: [{ perspective: 900 }, { translateX: shift }, { rotateY: `${rotation.get()}deg` }, { scale: scale.get() }],
+    };
+  });
+  return (
+    <Animated.View style={[styles.slice, style]} pointerEvents="none">
+      <MedalEdge tier={tier} shape={shape} size={MEDAL_SIZE} />
+    </Animated.View>
+  );
+}
+
 const useStyles = makeStyles(({ colors }) => ({
   content: {
     alignItems: 'center',
@@ -210,6 +274,7 @@ const useStyles = makeStyles(({ colors }) => ({
     marginBottom: spacing.lg,
   },
   face: { position: 'absolute', backfaceVisibility: 'hidden' },
+  slice: { position: 'absolute' },
   back: {},
   engraving: {
     position: 'absolute',
